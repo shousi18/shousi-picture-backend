@@ -29,7 +29,6 @@ knife4j:
     version: 1.0.0
     group:
       default:
-        group-name: 寿司图库
         api-rule: package
         api-rule-resources:
           - com.shousi.web.controller
