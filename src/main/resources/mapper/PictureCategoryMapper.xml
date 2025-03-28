@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shousi.web.mapper.PictureCategoryMapper">
+
+    <resultMap id="BaseResultMap" type="com.shousi.web.model.entity.PictureCategory">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="categoryId" column="categoryId" jdbcType="BIGINT"/>
+            <result property="pictureId" column="pictureId" jdbcType="BIGINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,categoryId,pictureId
+    </sql>
+</mapper>

@@ -1,10 +1,12 @@
 package com.shousi.web.controller;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.shousi.web.annotation.AuthCheck;
 import com.shousi.web.common.BaseResponse;
 import com.shousi.web.common.DeleteRequest;
+import com.shousi.web.constant.RedisKeyConstant;
 import com.shousi.web.constant.UserConstant;
 import com.shousi.web.exception.BusinessException;
 import com.shousi.web.exception.ErrorCode;
@@ -14,21 +16,28 @@ import com.shousi.web.model.dto.picture.PictureQueryRequest;
 import com.shousi.web.model.dto.picture.PictureUpdateRequest;
 import com.shousi.web.model.dto.picture.PictureUploadRequest;
 import com.shousi.web.model.entity.Picture;
+import com.shousi.web.model.entity.Tag;
 import com.shousi.web.model.entity.User;
+import com.shousi.web.model.vo.PictureTagCategory;
 import com.shousi.web.model.vo.PictureVO;
+import com.shousi.web.model.vo.TagVO;
 import com.shousi.web.service.PictureService;
+import com.shousi.web.service.PictureTagService;
+import com.shousi.web.service.TagService;
 import com.shousi.web.service.UserService;
 import com.shousi.web.utils.ResultUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/picture")
@@ -36,10 +45,19 @@ import java.util.List;
 public class PictureController {
 
     @Resource
+    private StringRedisTemplate stringRedisTemplate;
+
+    @Resource
     private UserService userService;
 
     @Resource
     private PictureService pictureService;
+
+    @Resource
+    private PictureTagService pictureTagService;
+
+    @Resource
+    private TagService tagService;
 
     /**
      * 上传图片（可重新上传）
@@ -166,6 +184,7 @@ public class PictureController {
      * 编辑图片（给用户使用）
      */
     @PostMapping("/edit")
+    @Transactional
     public BaseResponse<Boolean> editPicture(@RequestBody PictureEditRequest pictureEditRequest, HttpServletRequest request) {
         if (pictureEditRequest == null || pictureEditRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -174,7 +193,12 @@ public class PictureController {
         Picture picture = new Picture();
         BeanUtils.copyProperties(pictureEditRequest, picture);
         // 注意将 list 转为 string
-        picture.setTags(JSONUtil.toJsonStr(pictureEditRequest.getTags()));
+        List<Long> tagList = pictureEditRequest.getTags();
+        // 转换为名称
+        List<String> tagName = tagService.listByIds(tagList).stream()
+                .map(Tag::getTagName)
+                .collect(Collectors.toList());
+        picture.setTags(JSONUtil.toJsonStr(tagName));
         // 设置编辑时间
         picture.setEditTime(new Date());
         // 数据校验
@@ -188,20 +212,34 @@ public class PictureController {
         if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
-        // 操作数据库
+        // 三更新 TODO 更新分类信息
+        // 1.更新标签使用次数
+        String oldTags = oldPicture.getTags();
+        if (StrUtil.isBlank(oldTags)) {
+            // 如果原图片标签为空，则直接更新
+            tagService.incrementTagCount(tagList);
+        }else {
+            // 如果原图片标签不为空，则先更新原图片标签数量，再更新新图片标签数量
+            List<Long> oldTagList = pictureTagService.getTagIdsByPictureId(id);
+            tagService.decrementTagCount(oldTagList);
+            tagService.incrementTagCount(tagList);
+        }
+        // 2.更新图片信息
         boolean result = pictureService.updateById(picture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        // 3.更新图片标签关联信息
+        pictureTagService.updatePictureTag(id, tagList);
         return ResultUtils.success(true);
     }
 
     @GetMapping("/tag_category")
     public BaseResponse<PictureTagCategory> listPictureTagCategory() {
+        String tags = stringRedisTemplate.opsForValue().get(RedisKeyConstant.PICTURE_TAG_LIST);
+        String categories = stringRedisTemplate.opsForValue().get(RedisKeyConstant.PICTURE_CATEGORY_LIST);
+
         PictureTagCategory pictureTagCategory = new PictureTagCategory();
-        List<String> tagList = Arrays.asList("热门", "搞笑", "生活", "高清", "艺术", "校园", "背景", "简历", "创意");
-        List<String> categoryList = Arrays.asList("模板", "电商", "表情包", "素材", "海报");
-        pictureTagCategory.setTagList(tagList);
-        pictureTagCategory.setCategoryList(categoryList);
+        pictureTagCategory.setTagList(JSONUtil.toList(tags, String.class));
+        pictureTagCategory.setCategoryList(JSONUtil.toList(categories, String.class));
         return ResultUtils.success(pictureTagCategory);
     }
-
 }
