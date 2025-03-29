@@ -1,8 +1,16 @@
 package com.shousi.web.constant;
 
+import com.shousi.web.model.vo.TagVO;
+
 public interface PictureConstant {
 
-    String PICTURE_TAG = "[\"热门\", \"搞笑\", \"生活\", \"高清\", \"艺术\", \"校园\", \"背景\", \"简历\", \"创意\"]";
+    /**
+     * 默认标签
+     */
+    String DEFAULT_TAG_NAME = "默认";
 
-    String PICTURE_CATEGORY = "[\"热门\", \"搞笑\", \"生活\", \"高清\", \"艺术\", \"校园\", \"背景\", \"简历\", \"创意\"]";
+    /**
+     * 默认分类
+     */
+    String DEFAULT_CATEGORY_NAME = "默认";
 }

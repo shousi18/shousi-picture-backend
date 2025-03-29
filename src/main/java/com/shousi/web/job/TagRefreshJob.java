@@ -3,7 +3,9 @@ package com.shousi.web.job;
 import cn.hutool.json.JSONUtil;
 import com.shousi.web.constant.PictureConstant;
 import com.shousi.web.constant.RedisKeyConstant;
+import com.shousi.web.model.vo.CategoryVO;
 import com.shousi.web.model.vo.TagVO;
+import com.shousi.web.service.CategoryService;
 import com.shousi.web.service.TagService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -27,6 +29,9 @@ public class TagRefreshJob {
 
     @Resource
     private TagService tagService;
+
+    @Resource
+    private CategoryService categoryService;
 
     @PostConstruct
     public void init() {
@@ -59,9 +64,13 @@ public class TagRefreshJob {
                     30, // 设置过期时间为30天
                     TimeUnit.DAYS
             );
+            List<CategoryVO> categoryVOS = categoryService.listHotCategories();
+            List<String> categoryNameList = categoryVOS.stream()
+                    .map(CategoryVO::getCategoryName)
+                    .collect(Collectors.toList());
             stringRedisTemplate.opsForValue().set(
                     RedisKeyConstant.PICTURE_CATEGORY_LIST,
-                    PictureConstant.PICTURE_CATEGORY,
+                    JSONUtil.toJsonStr(categoryNameList),
                     30,
                     TimeUnit.DAYS
             );

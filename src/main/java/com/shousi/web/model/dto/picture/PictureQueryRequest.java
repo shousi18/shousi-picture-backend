@@ -29,12 +29,12 @@ public class PictureQueryRequest extends PageRequest implements Serializable {
     /**  
      * 分类  
      */  
-    private String category;  
+    private Long categoryId;
   
     /**  
      * 标签  
      */  
-    private List<String> tags;
+    private List<Long> tagIds;
   
     /**  
      * 文件体积  

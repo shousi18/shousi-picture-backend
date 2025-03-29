@@ -1,6 +1,6 @@
 package com.shousi.web.controller;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.shousi.web.annotation.AuthCheck;
@@ -16,15 +16,10 @@ import com.shousi.web.model.dto.picture.PictureQueryRequest;
 import com.shousi.web.model.dto.picture.PictureUpdateRequest;
 import com.shousi.web.model.dto.picture.PictureUploadRequest;
 import com.shousi.web.model.entity.Picture;
-import com.shousi.web.model.entity.Tag;
 import com.shousi.web.model.entity.User;
 import com.shousi.web.model.vo.PictureTagCategory;
 import com.shousi.web.model.vo.PictureVO;
-import com.shousi.web.model.vo.TagVO;
-import com.shousi.web.service.PictureService;
-import com.shousi.web.service.PictureTagService;
-import com.shousi.web.service.TagService;
-import com.shousi.web.service.UserService;
+import com.shousi.web.service.*;
 import com.shousi.web.utils.ResultUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -37,7 +32,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/picture")
@@ -58,6 +52,12 @@ public class PictureController {
 
     @Resource
     private TagService tagService;
+
+    @Resource
+    private CategoryService categoryService;
+
+    @Resource
+    private PictureCategoryService pictureCategoryService;
 
     /**
      * 上传图片（可重新上传）
@@ -109,7 +109,7 @@ public class PictureController {
         Picture picture = new Picture();
         BeanUtils.copyProperties(pictureUpdateRequest, picture);
         // 注意将 list 转为 string
-        picture.setTags(JSONUtil.toJsonStr(pictureUpdateRequest.getTags()));
+        // todo picture.setTags(JSONUtil.toJsonStr(pictureUpdateRequest.getTags()));
         // 数据校验
         pictureService.validPicture(picture);
         // 判断是否存在
@@ -192,43 +192,45 @@ public class PictureController {
         // 在此处将实体类和 DTO 进行转换
         Picture picture = new Picture();
         BeanUtils.copyProperties(pictureEditRequest, picture);
-        // 注意将 list 转为 string
-        List<Long> tagList = pictureEditRequest.getTags();
-        // 转换为名称
-        List<String> tagName = tagService.listByIds(tagList).stream()
-                .map(Tag::getTagName)
-                .collect(Collectors.toList());
-        picture.setTags(JSONUtil.toJsonStr(tagName));
-        // 设置编辑时间
+
         picture.setEditTime(new Date());
         // 数据校验
         pictureService.validPicture(picture);
         User loginUser = userService.getLoginUser(request);
         // 判断是否存在
-        long id = pictureEditRequest.getId();
-        Picture oldPicture = pictureService.getById(id);
+        long pictureId = pictureEditRequest.getId();
+        Picture oldPicture = pictureService.getById(pictureId);
         ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
         // 仅本人或管理员可编辑
         if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
-        // 三更新 TODO 更新分类信息
-        // 1.更新标签使用次数
-        String oldTags = oldPicture.getTags();
-        if (StrUtil.isBlank(oldTags)) {
-            // 如果原图片标签为空，则直接更新
-            tagService.incrementTagCount(tagList);
-        }else {
-            // 如果原图片标签不为空，则先更新原图片标签数量，再更新新图片标签数量
-            List<Long> oldTagList = pictureTagService.getTagIdsByPictureId(id);
-            tagService.decrementTagCount(oldTagList);
-            tagService.incrementTagCount(tagList);
+        // 四更新
+        List<Long> tagList = pictureEditRequest.getTagIds();
+        if (CollUtil.isEmpty(tagList)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "至少选择一个标签");
         }
-        // 2.更新图片信息
+        Long categoryId = pictureEditRequest.getCategoryId();
+        if (categoryId == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请选择一个分类");
+        }
+        // 1.更新标签使用次数
+        // 查询关联表中该图片关联的标签id，并且减去旧的标签使用次数，并加上新的标签使用次数
+        List<Long> oldTagList = pictureTagService.getTagIdsByPictureId(pictureId);
+        tagService.decrementTagCount(oldTagList);
+        tagService.incrementTagCount(tagList);
+        // 2.更新分类使用次数
+        // 查询关联表中该图片关联的分类id，并且减去旧的分类使用次数，并加上新的分类使用次数
+        Long oldCategoryId = pictureCategoryService.getCategoryIdByPictureId(pictureId);
+        categoryService.decrementCategoryCount(oldCategoryId);
+        categoryService.incrementCategoryCount(categoryId);
+        // 3.更新图片信息
         boolean result = pictureService.updateById(picture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
-        // 3.更新图片标签关联信息
-        pictureTagService.updatePictureTag(id, tagList);
+        // 4.更新图片标签、分类关联信息
+        pictureTagService.updatePictureTag(pictureId, tagList);
+        pictureCategoryService.updatePictureCategory(pictureId, categoryId);
+
         return ResultUtils.success(true);
     }
 

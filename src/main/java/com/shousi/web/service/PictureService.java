@@ -58,4 +58,6 @@ public interface PictureService extends IService<Picture> {
      * @param picture
      */
     void validPicture(Picture picture);
+
+    PictureVO convertToVO(Picture picture);
 }

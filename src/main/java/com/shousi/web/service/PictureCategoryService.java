@@ -10,4 +10,17 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface PictureCategoryService extends IService<PictureCategory> {
 
+    /**
+     * 更新图片分类关联
+     * @param pictureId
+     * @param categoryId
+     */
+    void updatePictureCategory(long pictureId, long categoryId);
+
+    /**
+     * 根据图片id获取图片分类id
+     * @param pictureId
+     * @return
+     */
+    Long getCategoryIdByPictureId(long pictureId);
 }

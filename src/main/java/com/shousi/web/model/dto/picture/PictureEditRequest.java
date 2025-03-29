@@ -26,12 +26,12 @@ public class PictureEditRequest implements Serializable {
     /**  
      * 分类  
      */  
-    private String category;  
+    private Long categoryId;
   
     /**  
      * 标签  
      */  
-    private List<Long> tags;
+    private List<Long> tagIds;
   
     private static final long serialVersionUID = 1L;  
 }

@@ -35,12 +35,12 @@ public class PictureVO implements Serializable {
     /**  
      * 标签  
      */  
-    private List<String> tags;
+    private List<TagVO> tagList;
   
     /**  
      * 分类  
      */  
-    private String category;  
+    private CategoryVO category;
   
     /**  
      * 文件体积  
@@ -92,33 +92,5 @@ public class PictureVO implements Serializable {
      */  
     private UserVO user;  
   
-    private static final long serialVersionUID = 1L;  
-  
-    /**  
-     * 封装类转对象  
-     */  
-    public static Picture voToObj(PictureVO pictureVO) {
-        if (pictureVO == null) {  
-            return null;  
-        }  
-        Picture picture = new Picture();  
-        BeanUtils.copyProperties(pictureVO, picture);
-        // 类型不同，需要转换  
-        picture.setTags(JSONUtil.toJsonStr(pictureVO.getTags()));
-        return picture;  
-    }  
-  
-    /**  
-     * 对象转封装类  
-     */  
-    public static PictureVO objToVo(Picture picture) {  
-        if (picture == null) {  
-            return null;  
-        }  
-        PictureVO pictureVO = new PictureVO();  
-        BeanUtils.copyProperties(picture, pictureVO);  
-        // 类型不同，需要转换  
-        pictureVO.setTags(JSONUtil.toList(picture.getTags(), String.class));  
-        return pictureVO;  
-    }  
+    private static final long serialVersionUID = 1L;
 }

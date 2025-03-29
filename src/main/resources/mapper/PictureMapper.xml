@@ -9,8 +9,6 @@
             <result property="url" column="url" jdbcType="VARCHAR"/>
             <result property="name" column="name" jdbcType="VARCHAR"/>
             <result property="introduction" column="introduction" jdbcType="VARCHAR"/>
-            <result property="category" column="category" jdbcType="VARCHAR"/>
-            <result property="tags" column="tags" jdbcType="VARCHAR"/>
             <result property="picSize" column="picSize" jdbcType="BIGINT"/>
             <result property="picWidth" column="picWidth" jdbcType="INTEGER"/>
             <result property="picHeight" column="picHeight" jdbcType="INTEGER"/>
@@ -24,8 +22,9 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,url,name,
-        introduction,category,tags,
+        id
+        ,url,name,
+        introduction,
         picSize,picWidth,picHeight,
         picScale,picFormat,userId,
         createTime,editTime,updateTime,

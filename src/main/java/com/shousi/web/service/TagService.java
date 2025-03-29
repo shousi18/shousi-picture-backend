@@ -48,4 +48,10 @@ public interface TagService extends IService<Tag> {
      * @param tags
      */
     void decrementTagCount(List<Long> tags);
+
+    /**
+     * 获取默认标签id
+     * @return
+     */
+    List<Long> getDefaultTagIds();
 }

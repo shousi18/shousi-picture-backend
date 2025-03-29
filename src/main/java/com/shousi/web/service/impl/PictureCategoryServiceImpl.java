@@ -1,5 +1,6 @@
 package com.shousi.web.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.shousi.web.model.entity.PictureCategory;
 import com.shousi.web.service.PictureCategoryService;
@@ -15,6 +16,32 @@ import org.springframework.stereotype.Service;
 public class PictureCategoryServiceImpl extends ServiceImpl<PictureCategoryMapper, PictureCategory>
     implements PictureCategoryService{
 
+    @Override
+    public void updatePictureCategory(long pictureId, long categoryId) {
+        // 1.删除旧的关联记录
+        LambdaQueryWrapper<PictureCategory> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(PictureCategory::getPictureId, pictureId);
+        this.remove(queryWrapper);
+
+        // 2.保存新分类
+        if (categoryId > 0) {
+            PictureCategory pictureCategory = new PictureCategory();
+            pictureCategory.setPictureId(pictureId);
+            pictureCategory.setCategoryId(categoryId);
+            this.save(pictureCategory);
+        }
+    }
+
+    @Override
+    public Long getCategoryIdByPictureId(long pictureId) {
+        if (pictureId < 0) {
+            return null;
+        }
+        LambdaQueryWrapper<PictureCategory> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(PictureCategory::getPictureId, pictureId)
+                .select(PictureCategory::getCategoryId);
+        return getOne(queryWrapper).getCategoryId();
+    }
 }
 
 

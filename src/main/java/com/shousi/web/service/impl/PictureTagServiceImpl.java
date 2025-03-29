@@ -50,6 +50,9 @@ public class PictureTagServiceImpl extends ServiceImpl<PictureTagMapper, Picture
 
     @Override
     public List<Long> getTagIdsByPictureId(long pictureId) {
+        if (pictureId < 0) {
+            return new ArrayList<>();
+        }
         LambdaQueryWrapper<PictureTag> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(PictureTag::getPictureId, pictureId)
                 .select(PictureTag::getTagId);

@@ -1,9 +1,11 @@
 package com.shousi.web.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.shousi.web.exception.BusinessException;
 import com.shousi.web.exception.ErrorCode;
 import com.shousi.web.exception.ThrowUtils;
 import com.shousi.web.mapper.TagMapper;
@@ -17,8 +19,12 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static com.shousi.web.constant.PictureConstant.DEFAULT_TAG_NAME;
 
 /**
  * @author 86172
@@ -59,6 +65,9 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag>
 
     @Override
     public void incrementTagCount(List<Long> tags) {
+        if (CollUtil.isEmpty(tags)) {
+            return;
+        }
         LambdaUpdateWrapper<Tag> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.in(Tag::getId, tags)
                 .setSql("totalNum = totalNum + 1");
@@ -68,11 +77,27 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag>
 
     @Override
     public void decrementTagCount(List<Long> tags) {
+        if (CollUtil.isEmpty(tags)) {
+            return;
+        }
         LambdaUpdateWrapper<Tag> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.in(Tag::getId, tags)
                 .setSql("totalNum = totalNum - 1");
         boolean result = this.update(updateWrapper);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+    }
+
+    @Override
+    public List<Long> getDefaultTagIds() {
+        LambdaQueryWrapper<Tag> query = new LambdaQueryWrapper<>();
+        query.in(Tag::getTagName, Collections.singletonList(DEFAULT_TAG_NAME)); // 根据你的默认标签名称查询
+        List<Tag> defaultTags = this.list(query);
+        if (CollUtil.isEmpty(defaultTags)) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "默认标签未配置");
+        }
+        List<Long> defaultIds = defaultTags.stream().map(Tag::getId).collect(Collectors.toList());
+        this.incrementTagCount(defaultIds);
+        return defaultIds;
     }
 
     @Override
