@@ -4,10 +4,12 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.shousi.web.model.dto.picture.PictureQueryRequest;
+import com.shousi.web.model.dto.picture.PictureReviewRequest;
 import com.shousi.web.model.dto.picture.PictureUploadRequest;
 import com.shousi.web.model.entity.Picture;
 import com.shousi.web.model.entity.User;
 import com.shousi.web.model.vo.PictureVO;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
@@ -19,14 +21,14 @@ import javax.servlet.http.HttpServletRequest;
 */
 public interface PictureService extends IService<Picture> {
     /**
-     * 上传图片
+     * 上传图片（文件 / URL）
      *
-     * @param multipartFile
+     * @param inputSource 输入源
      * @param pictureUploadRequest
      * @param loginUser
      * @return
      */
-    PictureVO uploadPicture(MultipartFile multipartFile,
+    PictureVO uploadPicture(Object inputSource,
                             PictureUploadRequest pictureUploadRequest,
                             User loginUser);
 
@@ -59,5 +61,24 @@ public interface PictureService extends IService<Picture> {
      */
     void validPicture(Picture picture);
 
+    /**
+     * 图片审核
+     * @param pictureReviewRequest
+     * @param loginUser
+     */
+    void pictureReview(PictureReviewRequest pictureReviewRequest, User loginUser);
+
+    /**
+     * 补充审核参数
+     * @param picture
+     * @param loginUser
+     */
+    void fillReviewParams(Picture picture, User loginUser);
+
+    /**
+     * 转换为对应的VO类
+     * @param picture
+     * @return
+     */
     PictureVO convertToVO(Picture picture);
 }

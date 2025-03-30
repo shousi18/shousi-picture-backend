@@ -11,12 +11,10 @@ import com.shousi.web.constant.UserConstant;
 import com.shousi.web.exception.BusinessException;
 import com.shousi.web.exception.ErrorCode;
 import com.shousi.web.exception.ThrowUtils;
-import com.shousi.web.model.dto.picture.PictureEditRequest;
-import com.shousi.web.model.dto.picture.PictureQueryRequest;
-import com.shousi.web.model.dto.picture.PictureUpdateRequest;
-import com.shousi.web.model.dto.picture.PictureUploadRequest;
+import com.shousi.web.model.dto.picture.*;
 import com.shousi.web.model.entity.Picture;
 import com.shousi.web.model.entity.User;
+import com.shousi.web.model.eums.PictureReviewStatusEnum;
 import com.shousi.web.model.vo.PictureTagCategory;
 import com.shousi.web.model.vo.PictureVO;
 import com.shousi.web.service.*;
@@ -63,13 +61,25 @@ public class PictureController {
      * 上传图片（可重新上传）
      */
     @PostMapping("/upload")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<PictureVO> uploadPicture(
             @RequestPart("file") MultipartFile multipartFile,
             PictureUploadRequest pictureUploadRequest,
             HttpServletRequest request) {
         User loginUser = userService.getLoginUser(request);
         PictureVO pictureVO = pictureService.uploadPicture(multipartFile, pictureUploadRequest, loginUser);
+        return ResultUtils.success(pictureVO);
+    }
+
+    /**
+     * 上传图片（可重新上传）
+     */
+    @PostMapping("/upload/url")
+    public BaseResponse<PictureVO> uploadPictureByUrl(
+            @RequestBody PictureUploadRequest pictureUploadRequest,
+            HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        String fileUrl = pictureUploadRequest.getFileUrl();
+        PictureVO pictureVO = pictureService.uploadPicture(fileUrl, pictureUploadRequest, loginUser);
         return ResultUtils.success(pictureVO);
     }
 
@@ -101,21 +111,25 @@ public class PictureController {
      */
     @PostMapping("/update")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Boolean> updatePicture(@RequestBody PictureUpdateRequest pictureUpdateRequest) {
+    public BaseResponse<Boolean> updatePicture(@RequestBody PictureUpdateRequest pictureUpdateRequest,
+                                               HttpServletRequest request) {
         if (pictureUpdateRequest == null || pictureUpdateRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        // 将实体类和 DTO 进行转换
-        Picture picture = new Picture();
-        BeanUtils.copyProperties(pictureUpdateRequest, picture);
-        // 注意将 list 转为 string
-        // todo picture.setTags(JSONUtil.toJsonStr(pictureUpdateRequest.getTags()));
-        // 数据校验
-        pictureService.validPicture(picture);
         // 判断是否存在
         long id = pictureUpdateRequest.getId();
         Picture oldPicture = pictureService.getById(id);
         ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
+        // 将实体类和 DTO 进行转换
+        Picture picture = new Picture();
+        BeanUtils.copyProperties(pictureUpdateRequest, picture);
+        // 注意将 list 转为 string
+        // todo 待优化 更新图片标签、分类关联
+        // 数据校验
+        pictureService.validPicture(picture);
+        // 补充审核参数
+        User loginUser = userService.getLoginUser(request);
+        pictureService.fillReviewParams(picture, loginUser);
         // 操作数据库
         boolean result = pictureService.updateById(picture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
@@ -173,6 +187,8 @@ public class PictureController {
         long size = pictureQueryRequest.getPageSize();
         // 限制爬虫
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        // 控制内容可见性，普通用户只能看见已经审核的
+        pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
         // 查询数据库
         Page<Picture> picturePage = pictureService.page(new Page<>(current, size),
                 pictureService.getQueryWrapper(pictureQueryRequest));
@@ -189,22 +205,23 @@ public class PictureController {
         if (pictureEditRequest == null || pictureEditRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        // 在此处将实体类和 DTO 进行转换
-        Picture picture = new Picture();
-        BeanUtils.copyProperties(pictureEditRequest, picture);
-
-        picture.setEditTime(new Date());
-        // 数据校验
-        pictureService.validPicture(picture);
-        User loginUser = userService.getLoginUser(request);
         // 判断是否存在
         long pictureId = pictureEditRequest.getId();
         Picture oldPicture = pictureService.getById(pictureId);
         ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
         // 仅本人或管理员可编辑
+        User loginUser = userService.getLoginUser(request);
         if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
+        // 在此处将实体类和 DTO 进行转换
+        Picture picture = new Picture();
+        BeanUtils.copyProperties(pictureEditRequest, picture);
+        picture.setEditTime(new Date());
+        // 数据校验
+        pictureService.validPicture(picture);
+        // 补充审核参数
+        pictureService.fillReviewParams(picture, loginUser);
         // 四更新
         List<Long> tagList = pictureEditRequest.getTagIds();
         if (CollUtil.isEmpty(tagList)) {
@@ -233,6 +250,20 @@ public class PictureController {
 
         return ResultUtils.success(true);
     }
+
+    @PostMapping("/review")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> pictureReview(@RequestBody PictureReviewRequest pictureReviewRequest, HttpServletRequest request) {
+        if (pictureReviewRequest == null || pictureReviewRequest.getId() <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        // 判断用户是否登录
+        User loginUser = userService.getLoginUser(request);
+        ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
+        pictureService.pictureReview(pictureReviewRequest, loginUser);
+        return ResultUtils.success(true);
+    }
+
 
     @GetMapping("/tag_category")
     public BaseResponse<PictureTagCategory> listPictureTagCategory() {

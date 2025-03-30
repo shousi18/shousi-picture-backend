@@ -19,15 +19,18 @@
             <result property="editTime" column="editTime" jdbcType="TIMESTAMP"/>
             <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
             <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+            <result property="reviewStatus" column="reviewStatus" jdbcType="INTEGER"/>
+            <result property="reviewMessage" column="reviewMessage" jdbcType="VARCHAR"/>
+            <result property="reviewerId" column="reviewerId" jdbcType="BIGINT"/>
+            <result property="reviewTime" column="reviewTime" jdbcType="TIMESTAMP"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id
-        ,url,name,
-        introduction,
-        picSize,picWidth,picHeight,
-        picScale,picFormat,userId,
-        createTime,editTime,updateTime,
-        isDelete
+        id,url,name,
+        introduction,picSize,picWidth,
+        picHeight,picScale,picFormat,
+        userId,createTime,editTime,
+        updateTime,isDelete,reviewStatus,
+        reviewMessage,reviewerId,reviewTime
     </sql>
 </mapper>
