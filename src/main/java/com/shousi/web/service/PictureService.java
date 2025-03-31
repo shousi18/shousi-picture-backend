@@ -5,12 +5,11 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.shousi.web.model.dto.picture.PictureQueryRequest;
 import com.shousi.web.model.dto.picture.PictureReviewRequest;
+import com.shousi.web.model.dto.picture.PictureUploadByBatchRequest;
 import com.shousi.web.model.dto.picture.PictureUploadRequest;
 import com.shousi.web.model.entity.Picture;
 import com.shousi.web.model.entity.User;
 import com.shousi.web.model.vo.PictureVO;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 

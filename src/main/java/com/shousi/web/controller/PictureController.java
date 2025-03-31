@@ -11,6 +11,8 @@ import com.shousi.web.constant.UserConstant;
 import com.shousi.web.exception.BusinessException;
 import com.shousi.web.exception.ErrorCode;
 import com.shousi.web.exception.ThrowUtils;
+import com.shousi.web.manager.upload.FetchCommonPictureByBatch;
+import com.shousi.web.manager.upload.FetchDistinctPictureByBatch;
 import com.shousi.web.model.dto.picture.*;
 import com.shousi.web.model.entity.Picture;
 import com.shousi.web.model.entity.User;
@@ -57,6 +59,12 @@ public class PictureController {
     @Resource
     private PictureCategoryService pictureCategoryService;
 
+    @Resource
+    private FetchCommonPictureByBatch fetchCommonPictureByBatch;
+
+    @Resource
+    private FetchDistinctPictureByBatch fetchDistinctPictureByBatch;
+
     /**
      * 上传图片（可重新上传）
      */
@@ -81,6 +89,30 @@ public class PictureController {
         String fileUrl = pictureUploadRequest.getFileUrl();
         PictureVO pictureVO = pictureService.uploadPicture(fileUrl, pictureUploadRequest, loginUser);
         return ResultUtils.success(pictureVO);
+    }
+
+    @PostMapping("/upload/batch")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Integer> uploadPictureByBatch(
+            @RequestBody PictureUploadByBatchRequest pictureUploadByBatchRequest,
+            HttpServletRequest request
+    ) {
+        ThrowUtils.throwIf(pictureUploadByBatchRequest == null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        int uploadCount = fetchCommonPictureByBatch.uploadPictureByBatch(pictureUploadByBatchRequest, loginUser);
+        return ResultUtils.success(uploadCount);
+    }
+
+    @PostMapping("/upload/distinct/batch")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Integer> uploadDistinctPictureByBatch(
+            @RequestBody PictureUploadByBatchRequest pictureUploadByBatchRequest,
+            HttpServletRequest request
+    ) {
+        ThrowUtils.throwIf(pictureUploadByBatchRequest == null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        int uploadCount = fetchDistinctPictureByBatch.uploadPictureByBatch(pictureUploadByBatchRequest, loginUser);
+        return ResultUtils.success(uploadCount);
     }
 
     /**
@@ -168,13 +200,14 @@ public class PictureController {
      */
     @PostMapping("/list/page")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Page<Picture>> listPictureByPage(@RequestBody PictureQueryRequest pictureQueryRequest) {
+    public BaseResponse<Page<PictureVO>> listPictureByPage(@RequestBody PictureQueryRequest pictureQueryRequest,
+                                                           HttpServletRequest request) {
         long current = pictureQueryRequest.getCurrent();
         long size = pictureQueryRequest.getPageSize();
         // 查询数据库
         Page<Picture> picturePage = pictureService.page(new Page<>(current, size),
                 pictureService.getQueryWrapper(pictureQueryRequest));
-        return ResultUtils.success(picturePage);
+        return ResultUtils.success(pictureService.getPictureVOPage(picturePage, request));
     }
 
     /**
@@ -263,7 +296,6 @@ public class PictureController {
         pictureService.pictureReview(pictureReviewRequest, loginUser);
         return ResultUtils.success(true);
     }
-
 
     @GetMapping("/tag_category")
     public BaseResponse<PictureTagCategory> listPictureTagCategory() {
