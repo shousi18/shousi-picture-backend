@@ -26,4 +26,10 @@ public interface PictureTagService extends IService<PictureTag> {
      * @param pictureId
      */
     List<Long> getTagIdsByPictureId(long pictureId);
+
+    /**
+     * 根据图片id删除图片和标签关系
+     * @param pictureId
+     */
+    void deleteByPictureId(long pictureId);
 }

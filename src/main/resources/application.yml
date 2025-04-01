@@ -2,7 +2,10 @@ server:
   port: 8678
   servlet:
     context-path: /api
-
+    session:
+      # cookie 30天后过期
+      cookie:
+        max-age: 2592000
 spring:
   application:
     name: shousi-picture-backend
@@ -19,6 +22,11 @@ spring:
     port: 6379
     host: localhost
     database: 10
+  # session配置
+  session:
+    store-type: redis
+    # session天后过期
+    timeout: 2592000
 mybatis-plus:
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

@@ -60,6 +60,14 @@ public class PictureTagServiceImpl extends ServiceImpl<PictureTagMapper, Picture
                 .map(PictureTag::getTagId)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public void deleteByPictureId(long pictureId) {
+        LambdaQueryWrapper<PictureTag> deleteWrapper = new LambdaQueryWrapper<>();
+        deleteWrapper.eq(PictureTag::getPictureId, pictureId);
+        boolean result = this.remove(deleteWrapper);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "删除失败");
+    }
 }
 
 

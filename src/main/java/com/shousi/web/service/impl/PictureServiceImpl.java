@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.shousi.web.exception.BusinessException;
 import com.shousi.web.exception.ErrorCode;
 import com.shousi.web.exception.ThrowUtils;
+import com.shousi.web.manager.CosManager;
 import com.shousi.web.manager.upload.*;
 import com.shousi.web.mapper.PictureMapper;
 import com.shousi.web.model.dto.file.UploadPictureResult;
@@ -32,8 +33,10 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -73,19 +76,23 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     @Resource
     private UrlPictureUpload urlPictureUpload;
 
+    @Resource
+    private CosManager cosManager;
+
     @Override
     @Transactional
     public PictureVO uploadPicture(Object inputSource, PictureUploadRequest pictureUploadRequest, User loginUser) {
         // 校验参数
         ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
-        // 判断是新增还是更新
+        // 判断是新增还是更新，如果是更新则使用原本的图片id
         Long pictureId = null;
         if (pictureUploadRequest != null) {
             pictureId = pictureUploadRequest.getId();
         }
         // 如果是更新，判断图片是否存在
+        Picture oldPicture = new Picture();
         if (pictureId != null) {
-            Picture oldPicture = this.getById(pictureId);
+            oldPicture = this.getById(pictureId);
             ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR, "图片不存在");
             // 仅本人和管理员可以修改
             if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
@@ -100,9 +107,15 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             pictureUploadTemplate = urlPictureUpload;
         }
         UploadPictureResult uploadPictureResult = pictureUploadTemplate.uploadPicture(inputSource, uploadPathPrefix);
+        // 如果是更新操作，并且新图片上传成功，则清除原本的云端文件
+        if (pictureId != null) {
+            clearPictureFile(oldPicture);
+        }
         // 构造要入库的图片信息
         Picture picture = new Picture();
         picture.setUrl(uploadPictureResult.getUrl());
+        picture.setOriginUrl(uploadPictureResult.getOriginUrl());
+        picture.setThumbnailUrl(uploadPictureResult.getThumbnailUrl());
         String picName = uploadPictureResult.getPicName();
         if (pictureUploadRequest != null && StrUtil.isNotBlank(pictureUploadRequest.getPicName())) {
             picName = pictureUploadRequest.getPicName();
@@ -121,21 +134,25 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             // 更新图片信息
             picture.setId(pictureId);
             picture.setEditTime(new Date());
+            boolean result = this.updateById(picture);
+            ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "上传图片操作失败");
+            return convertToVO(picture);
         }
-        boolean isSuccess = this.saveOrUpdate(picture);
+        // 保存图片信息
+        boolean isSuccess = this.save(picture);
         ThrowUtils.throwIf(!isSuccess, ErrorCode.OPERATION_ERROR, "上传图片操作失败");
-
+        // 需要设置默认分类和标签
         Long savedPictureId = picture.getId();
         if (pictureId == null) {
             try {
-                // 设置默认分类
+                // 1.设置默认分类
                 Long defaultCategoryId = categoryService.getDefaultCategoryId();
                 PictureCategory pictureCategory = new PictureCategory();
                 pictureCategory.setPictureId(savedPictureId);
                 pictureCategory.setCategoryId(defaultCategoryId);
                 pictureCategoryService.save(pictureCategory);
 
-                // 设置默认标签
+                // 2.设置默认标签
                 List<Long> defaultTagIds = tagService.getDefaultTagIds();
                 List<PictureTag> pictureTags = defaultTagIds.stream()
                         .map(tagId -> {
@@ -340,6 +357,40 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         return pictureVO;
     }
 
+    @Async
+    @Override
+    public void clearPictureFile(Picture oldPicture) {
+        // 判断该图片是否被多条记录使用
+        String pictureUrl = oldPicture.getUrl();
+        long count = this.lambdaQuery()
+                .eq(Picture::getUrl, pictureUrl)
+                .count();
+        // 有不止一条记录用到了该图片，不清理
+        if (count > 1) {
+            return;
+        }
+        cosManager.deleteObject(subStringUrl(pictureUrl));
+        // 清理缩略图
+        String thumbnailUrl = oldPicture.getThumbnailUrl();
+        if (StrUtil.isNotBlank(thumbnailUrl)) {
+            cosManager.deleteObject(subStringUrl(thumbnailUrl));
+        }
+        // 清理原始文件
+        String originUrl = oldPicture.getOriginUrl();
+        if (StrUtil.isNotBlank(originUrl)) {
+            cosManager.deleteObject(subStringUrl(originUrl));
+        }
+    }
+
+    /**
+     * 切割url
+     * @param url
+     * @return
+     */
+    private String subStringUrl(String url) {
+        int publicIndex = url.indexOf("/public");
+        return url.substring(publicIndex);
+    }
 }
 
 

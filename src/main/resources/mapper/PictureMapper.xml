@@ -7,6 +7,8 @@
     <resultMap id="BaseResultMap" type="com.shousi.web.model.entity.Picture">
             <id property="id" column="id" jdbcType="BIGINT"/>
             <result property="url" column="url" jdbcType="VARCHAR"/>
+            <result property="originUrl" column="originUrl" jdbcType="VARCHAR"/>
+            <result property="thumbnailUrl" column="thumbnailUrl" jdbcType="VARCHAR"/>
             <result property="name" column="name" jdbcType="VARCHAR"/>
             <result property="introduction" column="introduction" jdbcType="VARCHAR"/>
             <result property="picSize" column="picSize" jdbcType="BIGINT"/>
@@ -26,7 +28,8 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,url,name,
+        id
+        ,url,originUrl,thumbnailUrl,name,
         introduction,picSize,picWidth,
         picHeight,picScale,picFormat,
         userId,createTime,editTime,

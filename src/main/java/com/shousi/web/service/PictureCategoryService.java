@@ -23,4 +23,10 @@ public interface PictureCategoryService extends IService<PictureCategory> {
      * @return
      */
     Long getCategoryIdByPictureId(long pictureId);
+
+    /**
+     * 根据图片id删除图片分类关联
+     * @param pictureId
+     */
+    void deleteByPictureId(long pictureId);
 }

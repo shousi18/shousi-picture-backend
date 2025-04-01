@@ -80,4 +80,10 @@ public interface PictureService extends IService<Picture> {
      * @return
      */
     PictureVO convertToVO(Picture picture);
+
+    /**
+     * 清除图片文件（异步进行清理）
+     * @param oldPicture
+     */
+    void clearPictureFile(Picture oldPicture);
 }
