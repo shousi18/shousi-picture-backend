@@ -75,6 +75,14 @@ public interface PictureService extends IService<Picture> {
     void fillReviewParams(Picture picture, User loginUser);
 
     /**
+     * 校验图片权限
+     *
+     * @param loginUser
+     * @param picture
+     */
+    void checkPictureAuth(User loginUser, Picture picture);
+
+    /**
      * 转换为对应的VO类
      * @param picture
      * @return
@@ -86,4 +94,6 @@ public interface PictureService extends IService<Picture> {
      * @param oldPicture
      */
     void clearPictureFile(Picture oldPicture);
+
+    void deletePicture(long id, User loginUser);
 }

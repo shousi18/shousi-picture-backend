@@ -11,7 +11,12 @@ public class PictureUpdateRequest implements Serializable {
     /**  
      * id  
      */  
-    private Long id;  
+    private Long id;
+
+    /**
+     * 空间id
+     */
+    private Long spaceId;
   
     /**  
      * 图片名称  
@@ -21,7 +26,7 @@ public class PictureUpdateRequest implements Serializable {
     /**  
      * 简介  
      */  
-    private String introduction;  
+    private String introduction;
   
     /**  
      * 分类  
@@ -32,6 +37,6 @@ public class PictureUpdateRequest implements Serializable {
      * 标签  
      */  
     private List<String> tags;
-  
+
     private static final long serialVersionUID = 1L;  
 }

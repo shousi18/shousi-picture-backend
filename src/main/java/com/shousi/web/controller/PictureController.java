@@ -21,6 +21,7 @@ import com.shousi.web.manager.upload.FetchCommonPictureByBatch;
 import com.shousi.web.manager.upload.FetchDistinctPictureByBatch;
 import com.shousi.web.model.dto.picture.*;
 import com.shousi.web.model.entity.Picture;
+import com.shousi.web.model.entity.Space;
 import com.shousi.web.model.entity.User;
 import com.shousi.web.model.eums.PictureReviewStatusEnum;
 import com.shousi.web.model.vo.PictureTagCategory;
@@ -64,6 +65,9 @@ public class PictureController {
 
     @Resource
     private CategoryService categoryService;
+
+    @Resource
+    private SpaceService spaceService;
 
     @Resource
     private PictureCategoryService pictureCategoryService;
@@ -141,21 +145,11 @@ public class PictureController {
         }
         User loginUser = userService.getLoginUser(request);
         long id = deleteRequest.getId();
-        // 判断是否存在
-        Picture oldPicture = pictureService.getById(id);
-        ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
-        // 仅本人或管理员可删除
-        if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
-            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
-        }
-        // 操作数据库
-        boolean result = pictureService.removeById(id);
-        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        // 删除图片
+        pictureService.deletePicture(id, loginUser);
         // 删除对应的关联表中数据
         pictureTagService.deleteByPictureId(id);
         pictureCategoryService.deleteByPictureId(id);
-        // 清理云端文件
-        pictureService.clearPictureFile(oldPicture);
         return ResultUtils.success(true);
     }
 
@@ -212,6 +206,11 @@ public class PictureController {
         // 查询数据库
         Picture picture = pictureService.getById(id);
         ThrowUtils.throwIf(picture == null, ErrorCode.NOT_FOUND_ERROR);
+        // 空间权限校验，空间的图片仅本人可以查看
+        User loginUser = userService.getLoginUser(request);
+        if (picture.getSpaceId() != null) {
+            pictureService.checkPictureAuth(loginUser, picture);
+        }
         // 获取封装类
         return ResultUtils.success(pictureService.getPictureVO(picture, request));
     }
@@ -241,8 +240,21 @@ public class PictureController {
         long size = pictureQueryRequest.getPageSize();
         // 限制爬虫
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
-        // 控制内容可见性，普通用户只能看见已经审核的
-        pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+        // 空间权限校验
+        if (pictureQueryRequest.getSpaceId() == null) {
+            // 公共图库
+            // 控制内容可见性，普通用户只能看见已经审核的
+            pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+            pictureQueryRequest.setNullSpaceId(true);
+        }else {
+            // 私有图库
+            User loginUser = userService.getLoginUser(request);
+            Space space = spaceService.getById(pictureQueryRequest.getSpaceId());
+            ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR, "空间不存在");
+            if (!loginUser.getId().equals(space.getUserId())) {
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "没有空间权限");
+            }
+        }
         // 查询数据库
         Page<Picture> picturePage = pictureService.page(new Page<>(current, size),
                 pictureService.getQueryWrapper(pictureQueryRequest));
@@ -313,11 +325,10 @@ public class PictureController {
         long pictureId = pictureEditRequest.getId();
         Picture oldPicture = pictureService.getById(pictureId);
         ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
-        // 仅本人或管理员可编辑
+
         User loginUser = userService.getLoginUser(request);
-        if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
-            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
-        }
+        // 校验权限
+        pictureService.checkPictureAuth(loginUser, oldPicture);
         // 在此处将实体类和 DTO 进行转换
         Picture picture = new Picture();
         BeanUtils.copyProperties(pictureEditRequest, picture);

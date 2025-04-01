@@ -5,30 +5,32 @@
 <mapper namespace="com.shousi.web.mapper.PictureMapper">
 
     <resultMap id="BaseResultMap" type="com.shousi.web.model.entity.Picture">
-            <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="url" column="url" jdbcType="VARCHAR"/>
-            <result property="originUrl" column="originUrl" jdbcType="VARCHAR"/>
-            <result property="thumbnailUrl" column="thumbnailUrl" jdbcType="VARCHAR"/>
-            <result property="name" column="name" jdbcType="VARCHAR"/>
-            <result property="introduction" column="introduction" jdbcType="VARCHAR"/>
-            <result property="picSize" column="picSize" jdbcType="BIGINT"/>
-            <result property="picWidth" column="picWidth" jdbcType="INTEGER"/>
-            <result property="picHeight" column="picHeight" jdbcType="INTEGER"/>
-            <result property="picScale" column="picScale" jdbcType="DOUBLE"/>
-            <result property="picFormat" column="picFormat" jdbcType="VARCHAR"/>
-            <result property="userId" column="userId" jdbcType="BIGINT"/>
-            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
-            <result property="editTime" column="editTime" jdbcType="TIMESTAMP"/>
-            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
-            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
-            <result property="reviewStatus" column="reviewStatus" jdbcType="INTEGER"/>
-            <result property="reviewMessage" column="reviewMessage" jdbcType="VARCHAR"/>
-            <result property="reviewerId" column="reviewerId" jdbcType="BIGINT"/>
-            <result property="reviewTime" column="reviewTime" jdbcType="TIMESTAMP"/>
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="url" column="url" jdbcType="VARCHAR"/>
+        <result property="spaceId" column="spaceId" jdbcType="BIGINT" />
+        <result property="originUrl" column="originUrl" jdbcType="VARCHAR"/>
+        <result property="thumbnailUrl" column="thumbnailUrl" jdbcType="VARCHAR"/>
+        <result property="name" column="name" jdbcType="VARCHAR"/>
+        <result property="introduction" column="introduction" jdbcType="VARCHAR"/>
+        <result property="picSize" column="picSize" jdbcType="BIGINT"/>
+        <result property="picWidth" column="picWidth" jdbcType="INTEGER"/>
+        <result property="picHeight" column="picHeight" jdbcType="INTEGER"/>
+        <result property="picScale" column="picScale" jdbcType="DOUBLE"/>
+        <result property="picFormat" column="picFormat" jdbcType="VARCHAR"/>
+        <result property="userId" column="userId" jdbcType="BIGINT"/>
+        <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+        <result property="editTime" column="editTime" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+        <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+        <result property="reviewStatus" column="reviewStatus" jdbcType="INTEGER"/>
+        <result property="reviewMessage" column="reviewMessage" jdbcType="VARCHAR"/>
+        <result property="reviewerId" column="reviewerId" jdbcType="BIGINT"/>
+        <result property="reviewTime" column="reviewTime" jdbcType="TIMESTAMP"/>
     </resultMap>
 
     <sql id="Base_Column_List">
         id
+        ,spaceId
         ,url,originUrl,thumbnailUrl,name,
         introduction,picSize,picWidth,
         picHeight,picScale,picFormat,
