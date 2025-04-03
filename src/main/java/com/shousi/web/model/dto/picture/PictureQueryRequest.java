@@ -1,5 +1,6 @@
 package com.shousi.web.model.dto.picture;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.shousi.web.common.PageRequest;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -101,6 +102,18 @@ public class PictureQueryRequest extends PageRequest implements Serializable {
      * 是否只查询 spaceId为 null 的数据
      */
     private boolean nullSpaceId;
+
+    /**
+     * 开始编辑时间
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date startEditTime;
+
+    /**
+     * 结束编辑时间
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date endEditTime;
 
     private static final long serialVersionUID = 1L;  
 }

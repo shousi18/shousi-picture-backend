@@ -1,7 +1,6 @@
 package com.shousi.web.job;
 
 import cn.hutool.json.JSONUtil;
-import com.shousi.web.constant.PictureConstant;
 import com.shousi.web.constant.RedisKeyConstant;
 import com.shousi.web.model.vo.CategoryVO;
 import com.shousi.web.model.vo.TagVO;
@@ -17,12 +16,11 @@ import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @Component
 @EnableScheduling
 @Slf4j
-public class TagRefreshJob {
+public class TagCategoryRefreshJob {
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
@@ -55,26 +53,19 @@ public class TagRefreshJob {
         try {
             // 刷新标签缓存
             List<TagVO> tagVOS = tagService.listHotTags();
-            List<String> tagNameList = tagVOS.stream()
-                    .map(TagVO::getTagName)
-                    .collect(Collectors.toList());
             stringRedisTemplate.opsForValue().set(
                     RedisKeyConstant.PICTURE_TAG_LIST,
-                    JSONUtil.toJsonStr(tagNameList),
+                    JSONUtil.toJsonStr(tagVOS),
                     30, // 设置过期时间为30天
                     TimeUnit.DAYS
             );
             List<CategoryVO> categoryVOS = categoryService.listHotCategories();
-            List<String> categoryNameList = categoryVOS.stream()
-                    .map(CategoryVO::getCategoryName)
-                    .collect(Collectors.toList());
             stringRedisTemplate.opsForValue().set(
                     RedisKeyConstant.PICTURE_CATEGORY_LIST,
-                    JSONUtil.toJsonStr(categoryNameList),
+                    JSONUtil.toJsonStr(categoryVOS),
                     30,
                     TimeUnit.DAYS
             );
-            log.info("缓存刷新成功，标签数：{}", tagNameList.size());
         } catch (Exception e) {
             log.error("缓存刷新失败", e);
         }

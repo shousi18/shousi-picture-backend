@@ -378,15 +378,4 @@ public class PictureController {
         pictureService.pictureReview(pictureReviewRequest, loginUser);
         return ResultUtils.success(true);
     }
-
-    @GetMapping("/tag_category")
-    public BaseResponse<PictureTagCategory> listPictureTagCategory() {
-        String tags = stringRedisTemplate.opsForValue().get(RedisKeyConstant.PICTURE_TAG_LIST);
-        String categories = stringRedisTemplate.opsForValue().get(RedisKeyConstant.PICTURE_CATEGORY_LIST);
-
-        PictureTagCategory pictureTagCategory = new PictureTagCategory();
-        pictureTagCategory.setTagList(JSONUtil.toList(tags, String.class));
-        pictureTagCategory.setCategoryList(JSONUtil.toList(categories, String.class));
-        return ResultUtils.success(pictureTagCategory);
-    }
 }

@@ -13,7 +13,9 @@ import com.shousi.web.manager.CosManager;
 import com.shousi.web.manager.upload.FilePictureUpload;
 import com.shousi.web.manager.upload.PictureUploadTemplate;
 import com.shousi.web.manager.upload.UrlPictureUpload;
+import com.shousi.web.mapper.PictureCategoryMapper;
 import com.shousi.web.mapper.PictureMapper;
+import com.shousi.web.mapper.PictureTagMapper;
 import com.shousi.web.model.dto.file.UploadPictureResult;
 import com.shousi.web.model.dto.picture.PictureQueryRequest;
 import com.shousi.web.model.dto.picture.PictureReviewRequest;
@@ -218,6 +220,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         String sortOrder = pictureQueryRequest.getSortOrder();
         Integer reviewStatus = pictureQueryRequest.getReviewStatus();
         String reviewMessage = pictureQueryRequest.getReviewMessage();
+        Date startEditTime = pictureQueryRequest.getStartEditTime();
+        Date endEditTime = pictureQueryRequest.getEndEditTime();
         Long reviewerId = pictureQueryRequest.getReviewerId();
         // 从多字段中搜索
         if (StrUtil.isNotBlank(searchText)) {
@@ -241,6 +245,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         queryWrapper.eq(ObjUtil.isNotEmpty(picScale), "picScale", picScale);
         queryWrapper.eq(ObjUtil.isNotEmpty(reviewStatus), "reviewStatus", reviewStatus);
         queryWrapper.eq(ObjUtil.isNotEmpty(reviewerId), "reviewerId", reviewerId);
+        queryWrapper.ge(ObjUtil.isNotEmpty(startEditTime), "editTime", startEditTime);
+        queryWrapper.lt(ObjUtil.isNotEmpty(endEditTime), "editTime", endEditTime);
         // 排序
         queryWrapper.orderBy(StrUtil.isNotEmpty(sortField), sortOrder.equals("ascend"), sortField);
         // 新增分类和标签参数
