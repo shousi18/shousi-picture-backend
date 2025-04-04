@@ -7,9 +7,10 @@
     <resultMap id="BaseResultMap" type="com.shousi.web.model.entity.Picture">
         <id property="id" column="id" jdbcType="BIGINT"/>
         <result property="url" column="url" jdbcType="VARCHAR"/>
-        <result property="spaceId" column="spaceId" jdbcType="BIGINT" />
+        <result property="spaceId" column="spaceId" jdbcType="BIGINT"/>
         <result property="originUrl" column="originUrl" jdbcType="VARCHAR"/>
         <result property="thumbnailUrl" column="thumbnailUrl" jdbcType="VARCHAR"/>
+        <result property="picColor" column="picColor" jdbcType="VARCHAR"/>
         <result property="name" column="name" jdbcType="VARCHAR"/>
         <result property="introduction" column="introduction" jdbcType="VARCHAR"/>
         <result property="picSize" column="picSize" jdbcType="BIGINT"/>

@@ -14,6 +14,7 @@ import com.shousi.web.exception.BusinessException;
 import com.shousi.web.exception.ErrorCode;
 import com.shousi.web.manager.CosManager;
 import com.shousi.web.model.dto.file.UploadPictureResult;
+import com.shousi.web.utils.ColorSimilarUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
@@ -90,7 +91,7 @@ public abstract class PictureUploadTemplate {
                 if (objectList.size() > 1) {
                     thumbnailCiObject = objectList.get(1);
                 }
-                return buildResult(uploadPath, originalFilename, compressCiObject, thumbnailCiObject);
+                return buildResult(uploadPath, originalFilename, compressCiObject, thumbnailCiObject, imageInfo);
             }
             // 5.封装返回结果
             return buildResult(imageInfo, uploadPath, originalFilename, file);
@@ -109,16 +110,17 @@ public abstract class PictureUploadTemplate {
      * @param originalFilename
      * @param compressCiObject
      * @param thumbnailCiObject
+     * @param imageInfo
      * @return
      */
-    private UploadPictureResult buildResult(String uploadPath, String originalFilename, CIObject compressCiObject, CIObject thumbnailCiObject) {
+    private UploadPictureResult buildResult(String uploadPath, String originalFilename, CIObject compressCiObject, CIObject thumbnailCiObject, ImageInfo imageInfo) {
         UploadPictureResult uploadPictureResult = new UploadPictureResult();
         String format = compressCiObject.getFormat();
         int pictureWidth = compressCiObject.getWidth();
         int pictureHeight = compressCiObject.getHeight();
         double scale = NumberUtil.round(pictureWidth * 1.0 / pictureHeight, 2).doubleValue();
         uploadPictureResult.setUrl(cosClientConfig.getHost() + "/" + compressCiObject.getKey());
-        uploadPictureResult.setOriginUrl(cosClientConfig.getHost() + "/" +uploadPath);
+        uploadPictureResult.setOriginUrl(cosClientConfig.getHost() + "/" + uploadPath);
         uploadPictureResult.setThumbnailUrl(cosClientConfig.getHost() + "/" + thumbnailCiObject.getKey());
         uploadPictureResult.setPicName(FileUtil.mainName(originalFilename));
         uploadPictureResult.setPicSize(compressCiObject.getSize().longValue());
@@ -126,6 +128,7 @@ public abstract class PictureUploadTemplate {
         uploadPictureResult.setPicHeight(pictureHeight);
         uploadPictureResult.setPicScale(scale);
         uploadPictureResult.setPicFormat(format);
+        uploadPictureResult.setPicColor(ColorSimilarUtils.normalizeHexColor(imageInfo.getAve()));
         return uploadPictureResult;
     }
 
@@ -145,7 +148,7 @@ public abstract class PictureUploadTemplate {
         int pictureHeight = imageInfo.getHeight();
         double scale = NumberUtil.round(pictureWidth * 1.0 / pictureHeight, 2).doubleValue();
         uploadPictureResult.setUrl(cosClientConfig.getHost() + "/" + uploadPath);
-        uploadPictureResult.setOriginUrl(cosClientConfig.getHost() + "/" +uploadPath);
+        uploadPictureResult.setOriginUrl(cosClientConfig.getHost() + "/" + uploadPath);
         uploadPictureResult.setThumbnailUrl(cosClientConfig.getHost() + "/" + uploadPath);
         uploadPictureResult.setPicName(FileUtil.mainName(originalFilename));
         uploadPictureResult.setPicSize(FileUtil.size(file));
@@ -153,6 +156,7 @@ public abstract class PictureUploadTemplate {
         uploadPictureResult.setPicHeight(pictureHeight);
         uploadPictureResult.setPicScale(scale);
         uploadPictureResult.setPicFormat(format);
+        uploadPictureResult.setPicColor(ColorSimilarUtils.normalizeHexColor(imageInfo.getAve()));
         return uploadPictureResult;
     }
 

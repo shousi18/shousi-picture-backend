@@ -10,6 +10,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.shousi.web.annotation.AuthCheck;
+import com.shousi.web.api.imagesearch.ImageSearchApiFacade;
+import com.shousi.web.api.imagesearch.SoImageSearchApiFacade;
+import com.shousi.web.api.imagesearch.model.ImageSearchResult;
+import com.shousi.web.api.imagesearch.model.SoImageSearchResult;
 import com.shousi.web.common.BaseResponse;
 import com.shousi.web.common.DeleteRequest;
 import com.shousi.web.constant.RedisKeyConstant;
@@ -39,6 +43,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -246,7 +251,7 @@ public class PictureController {
             // 控制内容可见性，普通用户只能看见已经审核的
             pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
             pictureQueryRequest.setNullSpaceId(true);
-        }else {
+        } else {
             // 私有图库
             User loginUser = userService.getLoginUser(request);
             Space space = spaceService.getById(pictureQueryRequest.getSpaceId());
@@ -338,8 +343,8 @@ public class PictureController {
         // 补充审核参数
         pictureService.fillReviewParams(picture, loginUser);
         // 四更新
-        List<Long> tagList = pictureEditRequest.getTagIds();
-        if (CollUtil.isEmpty(tagList)) {
+        List<Long> tagIds = pictureEditRequest.getTagIds();
+        if (CollUtil.isEmpty(tagIds)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "至少选择一个标签");
         }
         Long categoryId = pictureEditRequest.getCategoryId();
@@ -350,7 +355,7 @@ public class PictureController {
         // 查询关联表中该图片关联的标签id，并且减去旧的标签使用次数，并加上新的标签使用次数
         List<Long> oldTagList = pictureTagService.getTagIdsByPictureId(pictureId);
         tagService.decrementTagCount(oldTagList);
-        tagService.incrementTagCount(tagList);
+        tagService.incrementTagCount(tagIds);
         // 2.更新分类使用次数
         // 查询关联表中该图片关联的分类id，并且减去旧的分类使用次数，并加上新的分类使用次数
         Long oldCategoryId = pictureCategoryService.getCategoryIdByPictureId(pictureId);
@@ -360,9 +365,54 @@ public class PictureController {
         boolean result = pictureService.updateById(picture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         // 4.更新图片标签、分类关联信息
-        pictureTagService.updatePictureTag(pictureId, tagList);
+        pictureTagService.updatePictureTag(pictureId, tagIds);
         pictureCategoryService.updatePictureCategory(pictureId, categoryId);
 
+        return ResultUtils.success(true);
+    }
+
+    @PostMapping("/search/picture")
+    public BaseResponse<List<ImageSearchResult>> searchPictureByPicture(@RequestBody SearchPictureByPictureRequest searchPictureByPictureRequest) {
+        ThrowUtils.throwIf(searchPictureByPictureRequest == null, ErrorCode.PARAMS_ERROR);
+        Long pictureId = searchPictureByPictureRequest.getPictureId();
+        ThrowUtils.throwIf(pictureId == null || pictureId <= 0, ErrorCode.PARAMS_ERROR);
+        Picture oldPicture = pictureService.getById(pictureId);
+        ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
+        List<ImageSearchResult> resultList = ImageSearchApiFacade.searchImage(oldPicture.getOriginUrl());
+        return ResultUtils.success(resultList);
+    }
+
+    @PostMapping("/search/picture/so")
+    public BaseResponse<List<SoImageSearchResult>> searchPictureByPictureIsSo(@RequestBody SearchPictureByPictureRequest searchPictureByPictureRequest) {
+        ThrowUtils.throwIf(searchPictureByPictureRequest == null, ErrorCode.PARAMS_ERROR);
+        Long pictureId = searchPictureByPictureRequest.getPictureId();
+        ThrowUtils.throwIf(pictureId == null || pictureId <= 0, ErrorCode.PARAMS_ERROR);
+        Picture oldPicture = pictureService.getById(pictureId);
+        ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
+        // start控制从哪一条记录开始查，测试后大概有100条记录，所以随机数设置为 0~100
+        int start = RandomUtil.randomInt(0, 100);
+        List<SoImageSearchResult> tempList = SoImageSearchApiFacade.searchImage(oldPicture.getOriginUrl(), start);
+        if (tempList.isEmpty()) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "调用接口失败");
+        }
+        return ResultUtils.success(tempList);
+    }
+
+    @PostMapping("/search/color")
+    public BaseResponse<List<PictureVO>> searchPictureByColor(@RequestBody SearchPictureByColorRequest searchPictureByColorRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(searchPictureByColorRequest == null, ErrorCode.PARAMS_ERROR);
+        String picColor = searchPictureByColorRequest.getPicColor();
+        Long spaceId = searchPictureByColorRequest.getSpaceId();
+        User loginUser = userService.getLoginUser(request);
+        List<PictureVO> result = pictureService.searchPictureByColor(spaceId, picColor, loginUser);
+        return ResultUtils.success(result);
+    }
+
+    @PostMapping("/edit/batch")
+    public BaseResponse<Boolean> editPictureByBatch(@RequestBody PictureEditByBatchRequest pictureEditByBatchRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(pictureEditByBatchRequest == null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        pictureService.editPictureByBatch(pictureEditByBatchRequest, loginUser);
         return ResultUtils.success(true);
     }
 
@@ -372,9 +422,7 @@ public class PictureController {
         if (pictureReviewRequest == null || pictureReviewRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        // 判断用户是否登录
         User loginUser = userService.getLoginUser(request);
-        ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
         pictureService.pictureReview(pictureReviewRequest, loginUser);
         return ResultUtils.success(true);
     }

@@ -17,9 +17,7 @@ import com.shousi.web.mapper.PictureCategoryMapper;
 import com.shousi.web.mapper.PictureMapper;
 import com.shousi.web.mapper.PictureTagMapper;
 import com.shousi.web.model.dto.file.UploadPictureResult;
-import com.shousi.web.model.dto.picture.PictureQueryRequest;
-import com.shousi.web.model.dto.picture.PictureReviewRequest;
-import com.shousi.web.model.dto.picture.PictureUploadRequest;
+import com.shousi.web.model.dto.picture.*;
 import com.shousi.web.model.entity.*;
 import com.shousi.web.model.eums.PictureReviewStatusEnum;
 import com.shousi.web.model.eums.UserRoleEnum;
@@ -27,6 +25,7 @@ import com.shousi.web.model.vo.PictureVO;
 import com.shousi.web.model.vo.TagVO;
 import com.shousi.web.model.vo.UserVO;
 import com.shousi.web.service.*;
+import com.shousi.web.utils.ColorSimilarUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.scheduling.annotation.Async;
@@ -35,7 +34,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 
@@ -159,6 +160,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         picture.setPicHeight(uploadPictureResult.getPicHeight());
         picture.setPicScale(uploadPictureResult.getPicScale());
         picture.setPicFormat(uploadPictureResult.getPicFormat());
+        picture.setPicColor(uploadPictureResult.getPicColor());
         picture.setUserId(loginUser.getId());
         // 填充审核参数
         fillReviewParams(picture, loginUser);
@@ -292,7 +294,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             return pictureVOPage;
         }
         // 对象列表 => 封装对象列表
-        List<PictureVO> pictureVOList = pictureList.stream().map(this::convertToVO).collect(Collectors.toList());
+        List<PictureVO> pictureVOList = pictureList.stream()
+                .map(this::convertToVO)
+                .collect(Collectors.toList());
         // 1. 关联查询用户信息
         Set<Long> userIdSet = pictureList.stream().map(Picture::getUserId).collect(Collectors.toSet());
         Map<Long, List<User>> userIdUserListMap = userService.listByIds(userIdSet).stream()
@@ -387,8 +391,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     }
 
     @Override
-    public PictureVO
-    convertToVO(Picture picture) {
+    public PictureVO convertToVO(Picture picture) {
         PictureVO pictureVO = new PictureVO();
         BeanUtils.copyProperties(picture, pictureVO);
         List<Long> pictureTagIdList = pictureTagService.getTagIdsByPictureId(picture.getId());
@@ -435,6 +438,89 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     }
 
     @Override
+    public List<PictureVO> searchPictureByColor(Long spaceId, String picColor, User loginUser) {
+        // 1.校验参数
+        ThrowUtils.throwIf(StrUtil.isBlank(picColor), ErrorCode.PARAMS_ERROR);
+        ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
+        ThrowUtils.throwIf(spaceId == null, ErrorCode.PARAMS_ERROR);
+        // 2.校验空间权限
+        Space space = spaceService.getById(spaceId);
+        ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR, "空间不存在");
+        spaceService.checkSpaceAuth(loginUser, space);
+        // 3.查询空间下有色调的图片
+        List<Picture> pictureList = this.lambdaQuery()
+                .eq(Picture::getSpaceId, spaceId)
+                .isNotNull(Picture::getPicColor)
+                .list();
+        if (CollUtil.isEmpty(pictureList)) {
+            // 如果为空，返回空列表
+            return Collections.emptyList();
+        }
+        Color targetColor = Color.decode(picColor);
+        // 4.计算相似度并排序
+        List<Picture> sortedPictureList = pictureList.stream()
+                .sorted(Comparator.comparingDouble(picture -> {
+                    // 将字符串转为十六进制
+                    Color color = Color.decode(picture.getPicColor());
+                    return ColorSimilarUtils.calculateSimilarity(color, targetColor);
+                }))
+                .limit(10)
+                .collect(Collectors.toList());
+        // 5.返回结果
+        return sortedPictureList.stream()
+                .map(this::convertToVO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void editPictureByBatch(PictureEditByBatchRequest pictureEditByBatchRequest, User loginUser) {
+        List<Long> pictureIdList = pictureEditByBatchRequest.getPictureIdList();
+        List<Long> tagIds = pictureEditByBatchRequest.getTagIds();
+        ThrowUtils.throwIf(CollUtil.isEmpty(tagIds), ErrorCode.PARAMS_ERROR, "至少选择一个标签");
+        Long categoryId = pictureEditByBatchRequest.getCategoryId();
+        ThrowUtils.throwIf(categoryId == null, ErrorCode.PARAMS_ERROR, "请选择一个分类");
+        Long spaceId = pictureEditByBatchRequest.getSpaceId();
+        // 1.校验参数
+        ThrowUtils.throwIf(spaceId == null || CollUtil.isEmpty(pictureIdList), ErrorCode.PARAMS_ERROR);
+        // 2.校验权限
+        Space space = spaceService.getById(spaceId);
+        ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR, "空间不存在");
+        spaceService.checkSpaceAuth(loginUser, space);
+        // 3.查询指定图片
+        List<Picture> pictureList = this.lambdaQuery()
+                .select(Picture::getId, Picture::getSpaceId)
+                .eq(Picture::getSpaceId, spaceId)
+                .in(Picture::getId, pictureIdList)
+                .list();
+        if (CollUtil.isEmpty(pictureList)) {
+            return;
+        }
+        // 4.更新分类和标签
+        pictureList.forEach(picture -> {
+            // 更新标签和分类使用次数
+            Long pictureId = picture.getId();
+            // 查询关联表中该图片关联的标签id，并且减去旧的标签使用次数，并加上新的标签使用次数
+            List<Long> oldTagList = pictureTagService.getTagIdsByPictureId(pictureId);
+            tagService.decrementTagCount(oldTagList);
+            tagService.incrementTagCount(tagIds);
+            // 2.更新分类使用次数
+            // 查询关联表中该图片关联的分类id，并且减去旧的分类使用次数，并加上新的分类使用次数
+            Long oldCategoryId = pictureCategoryService.getCategoryIdByPictureId(pictureId);
+            categoryService.decrementCategoryCount(oldCategoryId);
+            categoryService.incrementCategoryCount(categoryId);
+            // 更新关联表
+            pictureCategoryService.updatePictureCategory(pictureId, categoryId);
+            pictureTagService.updatePictureTag(pictureId, tagIds);
+        });
+        // 5.批量更新名称
+        // 批量重命名
+        String nameRule = pictureEditByBatchRequest.getNameRule();
+        fillPictureWithNameRule(pictureList, nameRule);
+        this.updateBatchById(pictureList);
+    }
+
+    @Override
     @Transactional
     public void deletePicture(long id, User loginUser) {
         ThrowUtils.throwIf(id <= 0, ErrorCode.PARAMS_ERROR);
@@ -471,6 +557,28 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             publicIndex = url.indexOf("/space");
         }
         return url.substring(publicIndex);
+    }
+
+    /**
+     * nameRule 格式：图片{序号}
+     *
+     * @param pictureList
+     * @param nameRule
+     */
+    private void fillPictureWithNameRule(List<Picture> pictureList, String nameRule) {
+        if (CollUtil.isEmpty(pictureList) || StrUtil.isBlank(nameRule)) {
+            return;
+        }
+        long count = 1;
+        try {
+            for (Picture picture : pictureList) {
+                String pictureName = nameRule.replaceAll("\\{序号}", String.valueOf(count++));
+                picture.setName(pictureName);
+            }
+        } catch (Exception e) {
+            log.error("名称解析错误", e);
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "名称解析错误");
+        }
     }
 
     /**

@@ -1,0 +1,58 @@
+server:
+  port: 8678
+  servlet:
+    context-path: /api
+    session:
+      # cookie 30天后过期
+      cookie:
+        max-age: 2592000
+spring:
+  application:
+    name: shousi-picture-backend
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/shousi_picture?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+  # 开放更大的文件上传体积
+  servlet:
+    multipart:
+      max-file-size: 10MB
+  redis:
+    port: 6379
+    host: localhost
+    database: 10
+  # session配置
+  session:
+    store-type: redis
+    # session天后过期
+    timeout: 2592000
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: false
+  global-config:
+    db-config:
+      logic-delete-field: isDelete
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+# 接口文档配置
+knife4j:
+  enable: true
+  openapi:
+    title: 寿司图库接口管理
+    description: 寿司图库接口管理
+    version: 1.0.0
+    group:
+      default:
+        api-rule: package
+        api-rule-resources:
+          - com.shousi.web.controller
+# 腾讯云 cos对象存储怕配置
+cos:
+  client:
+    host:
+    secretId:
+    secretKey:
+    region:
+    bucket:

@@ -3,15 +3,13 @@ package com.shousi.web.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.shousi.web.model.dto.picture.PictureQueryRequest;
-import com.shousi.web.model.dto.picture.PictureReviewRequest;
-import com.shousi.web.model.dto.picture.PictureUploadByBatchRequest;
-import com.shousi.web.model.dto.picture.PictureUploadRequest;
+import com.shousi.web.model.dto.picture.*;
 import com.shousi.web.model.entity.Picture;
 import com.shousi.web.model.entity.User;
 import com.shousi.web.model.vo.PictureVO;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
 * @author 86172
@@ -95,5 +93,26 @@ public interface PictureService extends IService<Picture> {
      */
     void clearPictureFile(Picture oldPicture);
 
+    /**
+     * 根据颜色搜索图片
+     * @param spaceId
+     * @param picColor
+     * @param loginUser
+     * @return
+     */
+    List<PictureVO> searchPictureByColor(Long spaceId, String picColor, User loginUser);
+
+    /**
+     * 批量编辑图片
+     * @param pictureUploadByBatchRequest
+     * @param loginUser
+     */
+    void editPictureByBatch(PictureEditByBatchRequest pictureUploadByBatchRequest, User loginUser);
+
+    /**
+     * 删除图片
+     * @param id
+     * @param loginUser
+     */
     void deletePicture(long id, User loginUser);
 }

@@ -54,6 +54,11 @@ public class Picture implements Serializable {
     private String thumbnailUrl;
 
     /**
+     * 图片主色调
+     */
+    private String picColor;
+
+    /**
      * 标签
      */
     @TableField(exist = false)
