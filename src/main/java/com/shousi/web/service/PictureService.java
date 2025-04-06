@@ -3,6 +3,8 @@ package com.shousi.web.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.shousi.web.api.aliyunai.model.CreateOutPaintingTaskRequest;
+import com.shousi.web.api.aliyunai.model.CreateOutPaintingTaskResponse;
 import com.shousi.web.model.dto.picture.*;
 import com.shousi.web.model.entity.Picture;
 import com.shousi.web.model.entity.User;
@@ -115,4 +117,12 @@ public interface PictureService extends IService<Picture> {
      * @param loginUser
      */
     void deletePicture(long id, User loginUser);
+
+    /**
+     * 创建图片补图任务
+     * @param createPictureOutPaintingTaskRequest
+     * @param loginUser
+     * @return
+     */
+    CreateOutPaintingTaskResponse createOutPaintingTask(CreatePictureOutPaintingTaskRequest createPictureOutPaintingTaskRequest, User loginUser);
 }

@@ -1,11 +1,15 @@
 package com.shousi.web.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.shousi.web.api.aliyunai.AliYunAiApi;
+import com.shousi.web.api.aliyunai.model.CreateOutPaintingTaskRequest;
+import com.shousi.web.api.aliyunai.model.CreateOutPaintingTaskResponse;
 import com.shousi.web.exception.BusinessException;
 import com.shousi.web.exception.ErrorCode;
 import com.shousi.web.exception.ThrowUtils;
@@ -13,9 +17,7 @@ import com.shousi.web.manager.CosManager;
 import com.shousi.web.manager.upload.FilePictureUpload;
 import com.shousi.web.manager.upload.PictureUploadTemplate;
 import com.shousi.web.manager.upload.UrlPictureUpload;
-import com.shousi.web.mapper.PictureCategoryMapper;
 import com.shousi.web.mapper.PictureMapper;
-import com.shousi.web.mapper.PictureTagMapper;
 import com.shousi.web.model.dto.file.UploadPictureResult;
 import com.shousi.web.model.dto.picture.*;
 import com.shousi.web.model.entity.*;
@@ -76,6 +78,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
     @Resource
     private SpaceService spaceService;
+
+    @Resource
+    private AliYunAiApi aliYunAiApi;
 
     @Override
     @Transactional
@@ -543,6 +548,23 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         }
         // 清理云端文件
         this.clearPictureFile(oldPicture);
+    }
+
+    @Override
+    public CreateOutPaintingTaskResponse createOutPaintingTask(CreatePictureOutPaintingTaskRequest createPictureOutPaintingTaskRequest, User loginUser) {
+        Long pictureId = createPictureOutPaintingTaskRequest.getPictureId();
+        Picture picture = this.getById(pictureId);
+        ThrowUtils.throwIf(picture == null, ErrorCode.NOT_FOUND_ERROR, "图片不存在");
+        // 校验权限
+        this.checkPictureAuth(loginUser, picture);
+        // 构造请求参数
+        CreateOutPaintingTaskRequest taskRequest = new CreateOutPaintingTaskRequest();
+        CreateOutPaintingTaskRequest.Input input = new CreateOutPaintingTaskRequest.Input();
+        input.setImageUrl(picture.getOriginUrl());
+        taskRequest.setInput(input);
+        BeanUtil.copyProperties(createPictureOutPaintingTaskRequest, taskRequest);
+        // 创建任务
+        return aliYunAiApi.createOutPaintingTask(taskRequest);
     }
 
     /**

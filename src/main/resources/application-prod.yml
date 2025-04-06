@@ -56,3 +56,6 @@ cos:
     secretKey:
     region:
     bucket:
+aliyun:
+  ai:
+    apikey:
