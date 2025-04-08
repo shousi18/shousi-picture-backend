@@ -8,6 +8,7 @@ class ShousiPictureBackendApplicationTests {
 
     @Test
     void contextLoads() {
+
     }
 
 }

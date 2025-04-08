@@ -40,13 +40,11 @@ public class ColorSimilarUtils {
         int length = input.length();
         int index = 0;
         StringBuilder expanded = new StringBuilder();
+        if (length == 3) {
+            return "0x000000";
+        }
         // 处理三个颜色分量
         for (int i = 0; i < 3; i++) {
-            if (index >= length) {
-                // 后续分量全部填充00
-                expanded.append("00");
-                continue;
-            }
             char current = input.charAt(index);
             if (current == '0') {
                 // 当前分量是00的情况
@@ -82,15 +80,12 @@ public class ColorSimilarUtils {
 
     // 示例代码
     public static void main(String[] args) {
-        // 测试颜色
-        Color color1 = Color.decode("0xFF0000");
-        Color color2 = Color.decode("0xFE0101");
-        double similarity = calculateSimilarity(color1, color2);
-
-        System.out.println("颜色相似度为：" + similarity);
-
-        // 测试十六进制方法
-        double hexSimilarity = calculateSimilarity("0xFF0000", "0xFE0101");
-        System.out.println("十六进制颜色相似度为：" + hexSimilarity);
+        // 测试用例
+        System.out.println(normalizeHexColor("000"));     // 0x000000
+        System.out.println(normalizeHexColor("0a00"));    // 0x00a000
+        System.out.println(normalizeHexColor("a0b40"));   // 0xa0b400
+        System.out.println(normalizeHexColor("0ab0"));    // 0x00ab00
+        System.out.println(normalizeHexColor("00ab"));   // 0x0000ab
+        System.out.println(normalizeHexColor("0ab00"));  // 0x00ab00
     }
 }

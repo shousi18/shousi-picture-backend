@@ -2,6 +2,10 @@ package com.shousi.web.mapper;
 
 import com.shousi.web.model.entity.PictureTag;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.shousi.web.model.vo.space.analyze.SpaceTagAnalyzeResponse;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
 * @author 86172
@@ -11,6 +15,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 */
 public interface PictureTagMapper extends BaseMapper<PictureTag> {
 
+    List<SpaceTagAnalyzeResponse> selectTagStatistics(@Param("pictureIdList") List<Long> pictureIdList);
 }
 
 

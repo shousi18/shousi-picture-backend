@@ -13,4 +13,17 @@
     <sql id="Base_Column_List">
         id,tagId,pictureId
     </sql>
+    <select id="selectTagStatistics"
+            resultType="com.shousi.web.model.vo.space.analyze.SpaceTagAnalyzeResponse">
+        SELECT
+        t.tagName AS name,
+        t.totalNum AS count
+        FROM picture_tag pt
+        INNER JOIN tag t ON pt.tagId = t.id
+        WHERE pt.pictureId IN
+        <foreach collection="pictureIdList" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        GROUP BY t.id
+    </select>
 </mapper>

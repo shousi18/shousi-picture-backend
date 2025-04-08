@@ -12,10 +12,10 @@ import com.shousi.web.exception.ThrowUtils;
 import com.shousi.web.mapper.SpaceMapper;
 import com.shousi.web.model.dto.space.SpaceAddRequest;
 import com.shousi.web.model.dto.space.SpaceQueryRequest;
-import com.shousi.web.model.entity.Picture;
 import com.shousi.web.model.entity.Space;
 import com.shousi.web.model.entity.User;
 import com.shousi.web.model.eums.SpaceLevelEnum;
+import com.shousi.web.model.eums.UserRoleEnum;
 import com.shousi.web.model.vo.SpaceVO;
 import com.shousi.web.model.vo.UserVO;
 import com.shousi.web.service.SpaceService;
@@ -194,7 +194,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
 
     @Override
     public void checkSpaceAuth(User loginUser, Space space) {
-        if (!space.getUserId().equals(loginUser.getId())) {
+        if (!space.getUserId().equals(loginUser.getId()) && !loginUser.getUserRole().equals(UserRoleEnum.ADMIN.getValue())) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "没有空间权限");
         }
     }

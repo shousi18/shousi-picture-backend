@@ -10,6 +10,21 @@
             <result property="pictureId" column="pictureId" jdbcType="BIGINT"/>
     </resultMap>
 
+    <select id="selectCategoryStatistics" resultType="com.shousi.web.model.vo.space.analyze.SpaceCategoryAnalyzeResponse">
+        SELECT
+        c.categoryName AS name,
+        COUNT(pc.pictureId) AS count,
+        SUM(p.picSize) AS totalSize
+        FROM picture_category pc
+        INNER JOIN picture p ON pc.pictureId = p.id
+        INNER JOIN category c ON pc.categoryId = c.id
+        WHERE pc.pictureId IN
+        <foreach collection="pictureIdList" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        GROUP BY c.id
+    </select>
+    
     <sql id="Base_Column_List">
         id,categoryId,pictureId
     </sql>
