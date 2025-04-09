@@ -11,6 +11,7 @@ import com.shousi.web.model.dto.spaceuser.SpaceUserEditRequest;
 import com.shousi.web.model.dto.spaceuser.SpaceUserQueryRequest;
 import com.shousi.web.model.entity.SpaceUser;
 import com.shousi.web.model.entity.User;
+import com.shousi.web.model.eums.SpaceRoleEnum;
 import com.shousi.web.model.vo.SpaceUserVO;
 import com.shousi.web.service.SpaceUserService;
 import com.shousi.web.service.UserService;
@@ -113,6 +114,11 @@ public class SpaceUserController {
         long id = spaceUserEditRequest.getId();
         SpaceUser oldSpaceUser = spaceUserService.getById(id);
         ThrowUtils.throwIf(oldSpaceUser == null, ErrorCode.NOT_FOUND_ERROR);
+        // 编辑后的角色与以前一致，不用修改
+        String spaceRole = spaceUser.getSpaceRole();
+        if (spaceRole.equals(oldSpaceUser.getSpaceRole())) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "角色一致，请勿重复修改");
+        }
         // 操作数据库
         boolean result = spaceUserService.updateById(spaceUser);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
