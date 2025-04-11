@@ -1,32 +1,46 @@
 package com.shousi.web.service.impl;
 
-import cn.dev33.satoken.stp.StpUtil;
+import cn.hutool.captcha.CaptchaUtil;
+import cn.hutool.captcha.ShearCaptcha;
+import cn.hutool.captcha.generator.RandomGenerator;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.crypto.digest.DigestUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.shousi.web.exception.BusinessException;
 import com.shousi.web.exception.ErrorCode;
+import com.shousi.web.exception.ThrowUtils;
+import com.shousi.web.manager.FileManager;
 import com.shousi.web.manager.auth.StpKit;
 import com.shousi.web.mapper.UserMapper;
+import com.shousi.web.model.dto.email.EmailCodeRequest;
+import com.shousi.web.model.dto.file.UploadPictureResult;
 import com.shousi.web.model.dto.user.UserQueryRequest;
+import com.shousi.web.model.dto.user.UserUpdatePasswordRequest;
 import com.shousi.web.model.entity.User;
 import com.shousi.web.model.eums.UserRoleEnum;
 import com.shousi.web.model.vo.LoginUserVO;
 import com.shousi.web.model.vo.UserVO;
 import com.shousi.web.service.UserService;
+import com.shousi.web.utils.SendMailUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.ByteArrayOutputStream;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.shousi.web.constant.UserConstant.USER_LOGIN_STATE;
+import static com.shousi.web.constant.UserConstant.*;
 
 /**
  * @author 86172
@@ -38,14 +52,23 @@ import static com.shousi.web.constant.UserConstant.USER_LOGIN_STATE;
 public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         implements UserService {
 
+    @Resource
+    private FileManager fileManager;
+
+    @Resource
+    private SendMailUtils sendMailUtils;
+
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
+
     @Override
-    public long userRegister(String userAccount, String userPassword, String checkPassword) {
+    public long userRegister(String email, String code, String userPassword, String checkPassword) {
         // 1. 校验
-        if (StrUtil.hasBlank(userAccount, userPassword, checkPassword)) {
+        if (StrUtil.hasBlank(email, code, userPassword, checkPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
         }
-        if (userAccount.length() < 4) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户账号过短");
+        if (!email.matches("^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)+$")) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "邮箱格式错误");
         }
         if (userPassword.length() < 8 || checkPassword.length() < 8) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户密码过短");
@@ -53,12 +76,27 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if (!userPassword.equals(checkPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次输入的密码不一致");
         }
-        // 2. 检查是否重复
+        // 校验验证码
+        String verifyCodeKey = String.format(EMAIL_CODE_KEY, email, "register");
+        String emailCode = stringRedisTemplate.opsForValue().get(verifyCodeKey);
+        if (emailCode == null || !code.equals(emailCode)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "验证码错误或已过期");
+        }
+        // 2. 检查邮箱是否重复
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("userAccount", userAccount);
+        queryWrapper.eq("email", email);
         long count = this.baseMapper.selectCount(queryWrapper);
         if (count > 0) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号重复");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "该邮箱已被注册过");
+        }
+        // 3.检查账号是否重复，使用前缀作为用户账号
+        String userAccount = email.substring(0, email.indexOf("@"));
+        queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("userAccount", userAccount);
+        count = this.baseMapper.selectCount(queryWrapper);
+        if (count > 0) {
+            // 如果重复，加上随机数
+            userAccount = userPassword + RandomUtil.randomNumbers(5);
         }
         // 3. 加密
         String encryptPassword = getEncryptPassword(userPassword);
@@ -66,23 +104,23 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         User user = new User();
         user.setUserAccount(userAccount);
         user.setUserPassword(encryptPassword);
-        user.setUserName("无名");
+        user.setUserName(userAccount);
+        user.setEmail(email);
         user.setUserRole(UserRoleEnum.USER.getValue());
         boolean saveResult = this.save(user);
         if (!saveResult) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "注册失败，数据库错误");
         }
+        // 删除验证码
+        stringRedisTemplate.delete(verifyCodeKey);
         return user.getId();
     }
 
     @Override
-    public LoginUserVO userLogin(String userAccount, String userPassword, HttpServletRequest request) {
+    public LoginUserVO userLogin(String userAccountOrEmail, String userPassword, HttpServletRequest request) {
         // 1. 校验
-        if (StrUtil.hasBlank(userAccount, userPassword)) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
-        }
-        if (userAccount.length() < 4) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号错误");
+        if (StrUtil.hasBlank(userAccountOrEmail, userPassword)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "邮箱/账号或密码为空");
         }
         if (userPassword.length() < 8) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码错误");
@@ -91,8 +129,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         String encryptPassword = getEncryptPassword(userPassword);
         // 查询用户是否存在
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("userAccount", userAccount);
-        queryWrapper.eq("userPassword", encryptPassword);
+        queryWrapper.eq("userPassword", encryptPassword)
+                .and(w -> w.eq("userAccount", userAccountOrEmail))
+                .or()
+                .eq("email", userAccountOrEmail);
         User user = this.baseMapper.selectOne(queryWrapper);
         // 用户不存在
         if (user == null) {
@@ -191,8 +231,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     @Override
     public String getEncryptPassword(String userPassword) {
         // 盐值，混淆密码
-        final String SALT = "shousi";
-        return DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
+        return DigestUtils.md5DigestAsHex((DEFAULT_SALT + userPassword).getBytes());
     }
 
     @Override
@@ -200,6 +239,117 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return user != null && UserRoleEnum.ADMIN.getValue().equals(user.getUserRole());
     }
 
+    @Override
+    public String updateUserAvatar(MultipartFile file, User loginUser) {
+        // 校验
+        ThrowUtils.throwIf(file == null, ErrorCode.PARAMS_ERROR, "上传文件为空");
+        Long userId = loginUser.getId();
+        String uploadPathPrefix = String.format("/public/%s", userId);
+        // 上传头像
+        UploadPictureResult uploadPictureResult = fileManager.uploadPicture(file, uploadPathPrefix);
+        String newUrl = uploadPictureResult.getUrl();
+        // 更新用户头像
+        loginUser.setUserAvatar(newUrl);
+        boolean result = this.updateById(loginUser);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "更新用户头像失败");
+        return newUrl;
+    }
+
+    @Override
+    public boolean updateUserPassword(UserUpdatePasswordRequest userUpdatePasswordRequest, User currentUser) {
+        ThrowUtils.throwIf(userUpdatePasswordRequest == null, ErrorCode.PARAMS_ERROR);
+        Long userId = userUpdatePasswordRequest.getId();
+        ThrowUtils.throwIf(userId <= 0, ErrorCode.PARAMS_ERROR);
+        // 如果当前登录用户不是修改密码的用户，没有权限
+        if (!currentUser.getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
+        User loginUser = this.getById(userId);
+        // 判断旧密码是否正确
+        String userPassword = loginUser.getUserPassword();
+        String oldPassword = userUpdatePasswordRequest.getOldPassword();
+        if (!userPassword.equals(getEncryptPassword(oldPassword))) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "旧密码输入错误");
+        }
+        String newPassword = userUpdatePasswordRequest.getNewPassword();
+        String checkPassword = userUpdatePasswordRequest.getCheckPassword();
+        // 判断新旧密码是否一致
+        if (oldPassword.equals(newPassword)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "新旧密码不能一致");
+        }
+        // 判断两次输入的密码是否一致
+        if (!newPassword.equals(checkPassword)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次输入的密码不一致");
+        }
+        loginUser.setUserPassword(getEncryptPassword(newPassword));
+        return this.updateById(loginUser);
+    }
+
+    @Override
+    public Long getEmailCode(EmailCodeRequest emailCodeRequest, HttpServletRequest httpServletRequest) {
+        ThrowUtils.throwIf(StrUtil.hasBlank(emailCodeRequest.getEmail(), emailCodeRequest.getType()), ErrorCode.PARAMS_ERROR);
+        String email = emailCodeRequest.getEmail();
+        String type = emailCodeRequest.getType();
+        if (!email.matches("^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)+$")) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "邮箱格式错误");
+        }
+        String emailCodeKey = String.format(EMAIL_CODE_KEY, email, type);
+        if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(emailCodeKey))) {
+            // 如果有验证码，返回过期时间，不再发送验证码
+            return stringRedisTemplate.getExpire(emailCodeKey);
+        }
+        // 生成随机验证码
+        String code = RandomUtil.randomNumbers(6);
+        try {
+            sendMailUtils.sendMail(email, code);
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "发送验证码失败");
+        }
+        // 发送验证码成功，将验证码存入redis，设置过期时间：5分钟
+        stringRedisTemplate.opsForValue().set(emailCodeKey, code, 5, TimeUnit.MINUTES);
+        return stringRedisTemplate.getExpire(emailCodeKey);
+    }
+
+    @Override
+    public Map<String, String> getCaptcha() {
+        // 仅包含数字的字符集
+        String characters = "0123456789";
+        // 生成 4 位数字验证码
+        RandomGenerator randomGenerator = new RandomGenerator(characters, 4);
+        // 定义图片的显示大小，并创建验证码对象
+        ShearCaptcha shearCaptcha = CaptchaUtil.createShearCaptcha(320, 100, 4, 4);
+        shearCaptcha.setGenerator(randomGenerator);
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        shearCaptcha.write(outputStream);
+        byte[] captchaBytes = outputStream.toByteArray();
+        String base64Captcha = Base64.getEncoder().encodeToString(captchaBytes);
+        String captchaCode = shearCaptcha.getCode();
+
+        // 使用 Hutool 的 MD5 加密
+        String encryptedCaptcha = DigestUtil.md5Hex(captchaCode);
+
+        // 将加密后的验证码和 Base64 编码的图片存储到 Redis 中，设置过期时间为 5 分钟（300 秒）
+        stringRedisTemplate.opsForValue().set(CAPTCHA_KEY + encryptedCaptcha, captchaCode, 300, TimeUnit.SECONDS);
+
+        Map<String, String> data = new HashMap<>();
+        data.put("base64Captcha", base64Captcha);
+        data.put("encryptedCaptcha", encryptedCaptcha);
+        return data;
+    }
+
+    @Override
+    public boolean validateCaptcha(String verifyCode, String verifyCodeId) {
+        ThrowUtils.throwIf(StrUtil.hasBlank(verifyCode, verifyCodeId), ErrorCode.PARAMS_ERROR);
+        String encryptedCaptcha = DigestUtil.md5Hex(verifyCode);
+        if (Boolean.FALSE.equals(stringRedisTemplate.hasKey(CAPTCHA_KEY + encryptedCaptcha))) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "验证码错误");
+        }
+        if (!encryptedCaptcha.equals(verifyCodeId)) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "验证码错误");
+        }
+        return true;
+    }
 }
 
 

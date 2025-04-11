@@ -31,10 +31,8 @@ import java.util.List;
 
 @Slf4j
 @Service
-@Deprecated
 /**
  * 文件服务
- * @deprecated 已废弃
  *
  */
 public class FileManager {

@@ -23,4 +23,19 @@ public interface UserConstant {
     String ADMIN_ROLE = "admin";
     
     // endregion
+
+    /**
+     * 邮箱验证码
+     */
+    String EMAIL_CODE_KEY = "email:code:%s:%s";
+
+    /**
+     * 图形验证码
+     */
+    String CAPTCHA_KEY = "captcha:";
+
+    /**
+     * 密码加盐值
+     */
+    String DEFAULT_SALT = "shousi";
 }

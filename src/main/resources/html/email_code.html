@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>寿司云图库 - 邮箱验证码</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #fff5f0 0%, #f8f9ff 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 24px; /* 增加垂直间距 */
+        }
+
+        .main {
+            background: white;
+            width: 100%;
+            max-width: 720px; /* 加宽页面主体 */
+            border-radius: 16px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+            padding: 56px 48px; /* 增加内边距 */
+            position: relative;
+            overflow: hidden;
+            margin: 0 auto; /* 确保居中 */
+        }
+
+        .main::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #ff8e53 0%, #ff6b6b 100%);
+        }
+
+        .title {
+            text-align: center;
+            margin-bottom: 32px;
+            position: relative;
+        }
+
+        .title h1 {
+            color: #1a1a1a;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .title .subtitle {
+            color: #666;
+            font-size: 16px;
+            font-weight: 400;
+        }
+
+        .code-container {
+            background: rgba(255, 142, 83, 0.05);
+            border-radius: 16px;
+            padding: 40px;
+            margin: 40px 0;
+            text-align: center;
+            position: relative;
+            border: 1px dashed rgba(255, 142, 83, 0.3);
+        }
+
+        @media (min-width: 1200px) {
+            .main {
+                max-width: 800px; /* 大屏幕更宽 */
+            }
+
+            .code {
+                font-size: 56px; /* 大屏幕字号更大 */
+                padding: 24px 32px;
+            }
+        }
+
+        .code {
+            font-size: 52px;
+            font-weight: 700;
+            letter-spacing: 12px;
+            color: #ff6b6b;
+            background: white;
+            padding: 24px 40px;
+            border-radius: 12px;
+            display: inline-block;
+            box-shadow: 0 8px 24px rgba(255, 107, 107, 0.1);
+            position: relative;
+            transform: translateY(0);
+            transition: all 0.3s ease;
+        }
+
+        .notice {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 24px;
+            margin: 32px 0;
+        }
+
+        .notice ul {
+            list-style: none;
+        }
+
+        .notice li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .notice li::before {
+            content: '⚠️';
+            margin-right: 12px;
+            font-size: 16px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #999;
+            font-size: 14px;
+        }
+
+        .footer a {
+            color: #ff6b6b;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .footer a:hover {
+            color: #ff8e53;
+            text-decoration: underline;
+        }
+
+        @keyframes glow {
+            from {
+                box-shadow: 0 0 8px rgba(255, 107, 107, 0.2);
+            }
+            to {
+                box-shadow: 0 0 16px rgba(255, 107, 107, 0.3);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main {
+                padding: 32px 24px;
+            }
+
+            .code {
+                font-size: 32px;
+                padding: 12px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="main">
+    <div class="title">
+        <h1>寿司云图库</h1>
+        <div class="subtitle">邮箱验证码</div>
+    </div>
+
+    <div class="code-container">
+        <div class="code" :data="verify">000000</div>
+    </div>
+
+    <div class="notice">
+        <ul>
+            <li>此验证码5分钟内有效</li>
+            <li>请勿将验证码告知他人</li>
+            <li>如非本人操作，请立即修改密码</li>
+        </ul>
+    </div>
+
+    <div class="footer">
+        <p>由 <a href="http://localhost:5173/" target="_blank">寿司云图库</a> 安全中心发送</p>
+        <a href="https://blog.csdn.net/weixin_74879735?type=blog"><p style="margin-top: 8px;">欢迎来我的博客学习 ✨</p></a>
+    </div>
+</div>
+</body>
+</html>
