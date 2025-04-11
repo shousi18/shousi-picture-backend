@@ -8,6 +8,7 @@ import com.shousi.web.constant.UserConstant;
 import com.shousi.web.exception.BusinessException;
 import com.shousi.web.exception.ErrorCode;
 import com.shousi.web.exception.ThrowUtils;
+import com.shousi.web.manager.auth.SpaceUserAuthManager;
 import com.shousi.web.model.dto.space.*;
 import com.shousi.web.model.entity.Space;
 import com.shousi.web.model.entity.User;
@@ -37,6 +38,9 @@ public class SpaceController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private SpaceUserAuthManager spaceUserAuthManager;
 
     @PostMapping("/add")
     public BaseResponse<Long> addSpace(@RequestBody SpaceAddRequest spaceAddRequest, HttpServletRequest request) {
@@ -120,8 +124,10 @@ public class SpaceController {
         // 查询数据库
         Space space = spaceService.getById(id);
         ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR);
-        spaceService.checkSpaceAuth(loginUser, space);
+//        spaceService.checkSpaceAuth(loginUser, space);
+        List<String> permissionList = spaceUserAuthManager.getPermissionList(space, loginUser);
         SpaceVO spaceVO = spaceService.getSpaceVO(space, request);
+        spaceVO.setPermissionList(permissionList);
         // 获取封装类
         return ResultUtils.success(spaceVO);
     }

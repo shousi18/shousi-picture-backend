@@ -21,6 +21,7 @@ public class Picture implements Serializable {
     /**
      * 空间id
      */
+    @TableField(updateStrategy = FieldStrategy.NEVER)
     private Long spaceId;
 
     /**

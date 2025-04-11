@@ -3,30 +3,27 @@ package com.shousi.web.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.shousi.web.exception.BusinessException;
 import com.shousi.web.exception.ErrorCode;
 import com.shousi.web.exception.ThrowUtils;
+import com.shousi.web.mapper.SpaceUserMapper;
 import com.shousi.web.model.dto.spaceuser.SpaceUserAddRequest;
 import com.shousi.web.model.dto.spaceuser.SpaceUserQueryRequest;
 import com.shousi.web.model.entity.Space;
 import com.shousi.web.model.entity.SpaceUser;
 import com.shousi.web.model.entity.User;
-import com.shousi.web.model.eums.SpaceLevelEnum;
 import com.shousi.web.model.eums.SpaceRoleEnum;
-import com.shousi.web.model.eums.SpaceTypeEnum;
 import com.shousi.web.model.eums.SpaceUserInviteStatusEnum;
 import com.shousi.web.model.vo.SpaceUserVO;
 import com.shousi.web.model.vo.SpaceVO;
 import com.shousi.web.model.vo.UserVO;
 import com.shousi.web.service.SpaceService;
 import com.shousi.web.service.SpaceUserService;
-import com.shousi.web.mapper.SpaceUserMapper;
 import com.shousi.web.service.UserService;
-import lombok.AllArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -50,6 +47,7 @@ public class SpaceUserServiceImpl extends ServiceImpl<SpaceUserMapper, SpaceUser
     private UserService userService;
 
     @Resource
+    @Lazy
     private SpaceService spaceService;
 
     @Override

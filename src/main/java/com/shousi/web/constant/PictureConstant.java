@@ -47,4 +47,9 @@ public interface PictureConstant {
      */
     String PICTURE_FOURTH_STAGE_SIZE_NAME = ">1MB";
 
+    /**
+     * 公共图库id
+     */
+    long PUBLIC_PICTURE_LIBRARY_ID = 0L;
+
 }

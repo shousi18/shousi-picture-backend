@@ -3,6 +3,7 @@ package com.shousi.web.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -92,10 +93,6 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         if (spaceId != null) {
             Space space = spaceService.getById(spaceId);
             ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR, "空间不存在");
-            // 必须空间管理员才可以创建（空间创建人）
-            if (!space.getUserId().equals(loginUser.getId())) {
-                throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "没有空间权限");
-            }
             if (space.getTotalSize() > space.getMaxSize()) {
                 throw new BusinessException(ErrorCode.PARAMS_ERROR, "空间大小不足");
             }
@@ -113,10 +110,6 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         if (pictureId != null) {
             oldPicture = this.getById(pictureId);
             ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR, "图片不存在");
-            // 仅本人和管理员可以修改
-            if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
-                throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
-            }
             // 校验空间是否一致
             if (spaceId == null) {
                 // 传图片的时候没有传空间id，则复用原本的空间id
@@ -532,8 +525,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
         Picture oldPicture = this.getById(id);
         ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
-        // 校验权限
-        this.checkPictureAuth(loginUser, oldPicture);
+        // 校验权限，已经改为注解释鉴权
+//        this.checkPictureAuth(loginUser, oldPicture);
         // 操作数据库
         boolean result = this.removeById(id);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "删除图片失败");
@@ -555,8 +548,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         Long pictureId = createPictureOutPaintingTaskRequest.getPictureId();
         Picture picture = this.getById(pictureId);
         ThrowUtils.throwIf(picture == null, ErrorCode.NOT_FOUND_ERROR, "图片不存在");
-        // 校验权限
-        this.checkPictureAuth(loginUser, picture);
+        // 校验权限，已经改为注解式鉴权
+//        this.checkPictureAuth(loginUser, picture);
         // 构造请求参数
         CreateOutPaintingTaskRequest taskRequest = new CreateOutPaintingTaskRequest();
         CreateOutPaintingTaskRequest.Input input = new CreateOutPaintingTaskRequest.Input();

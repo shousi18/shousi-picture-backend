@@ -13,7 +13,10 @@ import com.shousi.web.model.entity.Picture;
 import com.shousi.web.model.entity.Space;
 import com.shousi.web.model.entity.User;
 import com.shousi.web.model.vo.space.analyze.*;
-import com.shousi.web.service.*;
+import com.shousi.web.service.PictureService;
+import com.shousi.web.service.SpaceAnalyzeService;
+import com.shousi.web.service.SpaceService;
+import com.shousi.web.service.UserService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;

@@ -8,7 +8,7 @@ public enum SpaceUserInviteStatusEnum {
 
     PENDING("待同意", 0),
     AGREE("同意", 1),
-    REJECT("拒绝", 1);
+    REJECT("拒绝", 2);
 
     private final String text;
 

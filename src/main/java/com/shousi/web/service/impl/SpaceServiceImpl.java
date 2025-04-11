@@ -51,6 +51,10 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
     @Resource
     private SpaceUserService spaceUserService;
 
+//    @Resource
+//    @Lazy
+//    private DynamicShardingManager dynamicShardingManager;
+
     @Override
     public long addSpace(SpaceAddRequest spaceAddRequest, User loginUser) {
         ThrowUtils.throwIf(spaceAddRequest == null, ErrorCode.PARAMS_ERROR);
@@ -98,6 +102,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
                     save = spaceUserService.save(spaceUser);
                     ThrowUtils.throwIf(!save, ErrorCode.OPERATION_ERROR, "创建团队空间失败，请联系工作人员");
                 }
+//                dynamicShardingManager.createSpacePictureTable(space);
                 // 返回新创建空间的id
                 return space.getId();
             });

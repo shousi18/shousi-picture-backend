@@ -1,5 +1,6 @@
 package com.shousi.web.service.impl;
 
+import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
@@ -7,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.shousi.web.exception.BusinessException;
 import com.shousi.web.exception.ErrorCode;
+import com.shousi.web.manager.auth.StpKit;
 import com.shousi.web.mapper.UserMapper;
 import com.shousi.web.model.dto.user.UserQueryRequest;
 import com.shousi.web.model.entity.User;
@@ -99,6 +101,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         // 3. 记录用户的登录态
         request.getSession().setAttribute(USER_LOGIN_STATE, user);
+        // 4.记录用户登录态到sa-token中
+        StpKit.SPACE.login(user.getId());
+        StpKit.SPACE.getSession().set(USER_LOGIN_STATE, user);
         return this.getLoginUserVO(user);
     }
 
