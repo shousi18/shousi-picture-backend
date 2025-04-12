@@ -23,6 +23,7 @@ import com.shousi.web.model.dto.file.UploadPictureResult;
 import com.shousi.web.model.dto.picture.*;
 import com.shousi.web.model.entity.*;
 import com.shousi.web.model.eums.PictureReviewStatusEnum;
+import com.shousi.web.model.eums.SpaceTypeEnum;
 import com.shousi.web.model.eums.UserRoleEnum;
 import com.shousi.web.model.vo.PictureVO;
 import com.shousi.web.model.vo.TagVO;
@@ -31,6 +32,7 @@ import com.shousi.web.service.*;
 import com.shousi.web.utils.ColorSimilarUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +43,8 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static com.shousi.web.constant.PictureConstant.PICTURE_EDIT_HISTORY_KEY;
 
 
 /**
@@ -83,6 +87,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     @Resource
     private AliYunAiApi aliYunAiApi;
 
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
+
     @Override
     @Transactional
     public PictureVO uploadPicture(Object inputSource, PictureUploadRequest pictureUploadRequest, User loginUser) {
@@ -117,7 +124,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
                     spaceId = oldPicture.getSpaceId();
                 }
             } else {
-                // 如果穿了空间id，则判断是不是同一个空间id
+                // 如果传了空间id，则判断是不是同一个空间id
                 if (!oldPicture.getSpaceId().equals(spaceId)) {
                     throw new BusinessException(ErrorCode.PARAMS_ERROR, "空间不一致");
                 }
@@ -176,6 +183,12 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
                         .setSql("totalSize = totalSize + " + (picture.getPicSize() - oldPicture.getPicSize()))
                         .update();
                 ThrowUtils.throwIf(!update, ErrorCode.OPERATION_ERROR, "更新空间信息失败");
+                Space space = spaceService.getById(spaceId);
+                if (space.getSpaceType() == SpaceTypeEnum.TEAM.getValue()) {
+                    // 如果是公共图库，更新后redis保存的之前的历史操作。
+                    String historyKey = PICTURE_EDIT_HISTORY_KEY + pictureId;
+                    stringRedisTemplate.delete(historyKey);
+                }
             }
             return convertToVO(picture);
         }

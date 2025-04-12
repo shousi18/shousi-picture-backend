@@ -1,11 +1,12 @@
 package com.shousi.web.manager.websocket.config;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import com.shousi.web.constant.PictureConstant;
 import com.shousi.web.manager.websocket.disruptor.PictureEditEventProducer;
 import com.shousi.web.manager.websocket.model.PictureEditRequestMessage;
 import com.shousi.web.manager.websocket.model.PictureEditResponseMessage;
@@ -13,6 +14,7 @@ import com.shousi.web.model.entity.User;
 import com.shousi.web.model.eums.PictureEditActionEnum;
 import com.shousi.web.model.eums.PictureEditMessageTypeEnum;
 import com.shousi.web.service.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -22,13 +24,17 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-import static com.shousi.web.constant.PictureConstant.PICTURE_EDIT_KEY;
+import static com.shousi.web.constant.PictureConstant.PICTURE_EDIT_HISTORY_KEY;
+import static com.shousi.web.constant.PictureConstant.PICTURE_SNAPSHOT_KEY;
 
+@Slf4j
 @Component
 public class PictureEditHandler extends TextWebSocketHandler {
 
@@ -69,6 +75,36 @@ public class PictureEditHandler extends TextWebSocketHandler {
         Long pictureId = (Long) session.getAttributes().get("pictureId");
         pictureEditSessions.putIfAbsent(pictureId, ConcurrentHashMap.newKeySet());
         pictureEditSessions.get(pictureId).add(session);
+        // 检查当前是否有编辑者，有的话通知新用户
+        Long editingUserId = pictureEditingUsers.get(pictureId);
+        if (editingUserId != null) {
+            // 获取编辑者用户信息
+            User editingUser = userService.getById(editingUserId);
+            PictureEditResponseMessage editResponseMessage = new PictureEditResponseMessage();
+            editResponseMessage.setType(PictureEditMessageTypeEnum.ENTER_EDIT.getValue());
+            editResponseMessage.setMessage("当前编辑者：" + editingUser.getUserName());
+            editResponseMessage.setUser(userService.getUserVO(editingUser));
+            session.sendMessage(new TextMessage(JSONUtil.toJsonStr(editResponseMessage)));
+        }
+        // 发送快照
+//        String snapshotKey = PICTURE_SNAPSHOT_KEY + pictureId;
+//        Map<Object, Object> snapshot = stringRedisTemplate.opsForHash().entries(snapshotKey);
+//        if (!snapshot.isEmpty()) {
+//            String lastAction = (String) snapshot.get("lastAction");
+//            PictureEditResponseMessage snapshotMessage = new PictureEditResponseMessage();
+//            snapshotMessage.setType(PictureEditMessageTypeEnum.EDIT_ACTION.getValue());
+//            snapshotMessage.setMessage("上一位编辑者的最后一次操作：" + lastAction);
+//            session.sendMessage(new TextMessage(JSONUtil.toJsonStr(snapshotMessage)));
+//        }
+        // 2. 发送操作历史
+        String historyKey = PICTURE_EDIT_HISTORY_KEY + pictureId;
+        List<String> history = stringRedisTemplate.opsForList().range(historyKey, 0, -1);
+        if (CollUtil.isNotEmpty(history)) {
+            PictureEditResponseMessage historyMessage = new PictureEditResponseMessage();
+            historyMessage.setType(PictureEditMessageTypeEnum.HISTORY.getValue());
+            historyMessage.setHistoryAction(history);
+            session.sendMessage(new TextMessage(JSONUtil.toJsonStr(historyMessage)));
+        }
         // 构造响应
         PictureEditResponseMessage pictureEditResponseMessage = new PictureEditResponseMessage();
         pictureEditResponseMessage.setType(PictureEditMessageTypeEnum.INFO.getValue());
@@ -174,16 +210,26 @@ public class PictureEditHandler extends TextWebSocketHandler {
         if (pictureEditActionEnum == null) {
             return;
         }
+        String message = String.format("用户 %s执行了%s操作", user.getUserName(), pictureEditActionEnum.getText());
         // 确认是当前编辑者
         if (editingUserId != null && editingUserId.equals(user.getId())) {
             PictureEditResponseMessage pictureEditResponseMessage = new PictureEditResponseMessage();
             pictureEditResponseMessage.setType(PictureEditMessageTypeEnum.EDIT_ACTION.getValue());
-            String message = String.format("用户 %s执行了%s操作", user.getUserName(), pictureEditActionEnum.getText());
             pictureEditResponseMessage.setMessage(message);
             pictureEditResponseMessage.setEditAction(editAction);
             pictureEditResponseMessage.setUser(userService.getUserVO(user));
             // 广播给除了自己的用户
             broadcastToPicture(pictureId, pictureEditResponseMessage, session);
+            // 记录操作历史
+            String historyKey = PICTURE_EDIT_HISTORY_KEY + pictureId;
+            stringRedisTemplate.opsForList().rightPush(historyKey, editAction);
+            stringRedisTemplate.expire(historyKey, 1, TimeUnit.DAYS);
+            // 更新状态快照
+//            String snapshotKey = PICTURE_SNAPSHOT_KEY + pictureId;
+//            Map<String, Object> snapshot = new HashMap<>();
+//            snapshot.put("lastAction", editAction);
+//            snapshot.put("timestamp", String.valueOf(System.currentTimeMillis()));
+//            stringRedisTemplate.opsForHash().putAll(snapshotKey, snapshot);
         }
     }
 

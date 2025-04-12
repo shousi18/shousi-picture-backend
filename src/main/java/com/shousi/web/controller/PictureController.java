@@ -473,4 +473,18 @@ public class PictureController {
         GetOutPaintingTaskResponse task = aliYunAiApi.getOutPaintingTask(taskId);
         return ResultUtils.success(task);
     }
+
+    @PostMapping("/clear_history")
+    public BaseResponse<String> clearEditHistory(@RequestBody PictureEditClearRequest pictureEditClearRequest) {
+        ThrowUtils.throwIf(pictureEditClearRequest == null, ErrorCode.PARAMS_ERROR);
+        Long pictureId = pictureEditClearRequest.getPictureId();
+        Long spaceId = pictureEditClearRequest.getSpaceId();
+        if (spaceId == null) {
+            return ResultUtils.success("清除历史记录");
+        }
+        // 清除操作历史
+        String historyKey = "picture:edit:history:" + pictureId;
+        stringRedisTemplate.delete(historyKey);
+        return ResultUtils.success("清除历史记录");
+    }
 }

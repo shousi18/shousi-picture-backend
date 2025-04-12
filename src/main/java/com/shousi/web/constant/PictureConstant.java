@@ -57,4 +57,13 @@ public interface PictureConstant {
      */
     String PICTURE_EDIT_KEY = "picture:edit:";
 
+    /**
+     * 操作历史记录存储（按图片ID存储最后10个操作）
+     */
+    String PICTURE_EDIT_HISTORY_KEY = "picture:edit:history:";
+    /**
+     * 完整状态快照存储
+     */
+    String PICTURE_SNAPSHOT_KEY = "picture:snapshot:";
+
 }
