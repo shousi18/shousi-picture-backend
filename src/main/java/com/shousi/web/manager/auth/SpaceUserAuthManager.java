@@ -68,6 +68,7 @@ public class SpaceUserAuthManager {
         List<String> ADMIN_PERMISSIONS = getPermissionListByRole(SpaceRoleEnum.ADMIN.getValue());
         // 公共图库
         if (space == null) {
+            // 如果是管理员，则返回所有权限
             if (userService.isAdmin(loginUser)) {
                 return ADMIN_PERMISSIONS;
             }

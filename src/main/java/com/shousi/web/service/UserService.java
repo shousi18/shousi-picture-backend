@@ -3,6 +3,7 @@ package com.shousi.web.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.shousi.web.model.dto.email.EmailCodeRequest;
 import com.shousi.web.model.dto.user.UserQueryRequest;
+import com.shousi.web.model.dto.user.UserUpdateEmailRequest;
 import com.shousi.web.model.dto.user.UserUpdatePasswordRequest;
 import com.shousi.web.model.entity.User;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -145,4 +146,12 @@ public interface UserService extends IService<User> {
      * @param verifyCodeId
      */
     boolean validateCaptcha(String verifyCode, String verifyCodeId);
+
+    /**
+     * 更新用户邮箱
+     * @param userUpdateRequest
+     * @param currentUser
+     * @return
+     */
+    boolean updateUserEmail(UserUpdateEmailRequest userUpdateRequest, User currentUser);
 }

@@ -52,4 +52,9 @@ public interface PictureConstant {
      */
     long PUBLIC_PICTURE_LIBRARY_ID = 0L;
 
+    /**
+     * 公共编辑图片 key
+     */
+    String PICTURE_EDIT_KEY = "picture:edit:";
+
 }

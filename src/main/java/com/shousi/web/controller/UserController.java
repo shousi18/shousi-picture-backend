@@ -185,6 +185,16 @@ public class UserController {
         return ResultUtils.success(result);
     }
 
+    @PostMapping("/update/email")
+    public BaseResponse<Boolean> updateUserEmail(@RequestBody UserUpdateEmailRequest userUpdateRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(userUpdateRequest == null, ErrorCode.PARAMS_ERROR);
+        User currentUser = userService.getLoginUser(request);
+        boolean result = userService.updateUserEmail(userUpdateRequest, currentUser);
+        if (!result) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR);
+        }
+        return ResultUtils.success(result);
+    }
 
     /**
      * 分页获取用户封装列表（仅管理员）

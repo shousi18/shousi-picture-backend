@@ -19,6 +19,7 @@ import com.shousi.web.mapper.UserMapper;
 import com.shousi.web.model.dto.email.EmailCodeRequest;
 import com.shousi.web.model.dto.file.UploadPictureResult;
 import com.shousi.web.model.dto.user.UserQueryRequest;
+import com.shousi.web.model.dto.user.UserUpdateEmailRequest;
 import com.shousi.web.model.dto.user.UserUpdatePasswordRequest;
 import com.shousi.web.model.entity.User;
 import com.shousi.web.model.eums.UserRoleEnum;
@@ -293,6 +294,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if (!email.matches("^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)+$")) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "邮箱格式错误");
         }
+        // 邮箱不能重复
+        if (Boolean.TRUE.equals(this.lambdaQuery().eq(User::getEmail, email).exists())) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "该邮箱已被注册");
+        }
         String emailCodeKey = String.format(EMAIL_CODE_KEY, email, type);
         if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(emailCodeKey))) {
             // 如果有验证码，返回过期时间，不再发送验证码
@@ -348,6 +353,41 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if (!encryptedCaptcha.equals(verifyCodeId)) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "验证码错误");
         }
+        return true;
+    }
+
+    @Override
+    public boolean updateUserEmail(UserUpdateEmailRequest userUpdateEmailRequest, User currentUser) {
+        // 校验参数
+        ThrowUtils.throwIf(userUpdateEmailRequest == null, ErrorCode.PARAMS_ERROR);
+        String newEmail = userUpdateEmailRequest.getNewEmail();
+        String code = userUpdateEmailRequest.getCode();
+        Long userId = userUpdateEmailRequest.getId();
+        ThrowUtils.throwIf(userId == null || userId <= 0, ErrorCode.PARAMS_ERROR);
+        if (!currentUser.getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
+        ThrowUtils.throwIf(StrUtil.hasBlank(newEmail, code), ErrorCode.PARAMS_ERROR);
+        if (!newEmail.matches("^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)+$")) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "邮箱格式错误");
+        }
+        String emailCodeKey = String.format(EMAIL_CODE_KEY, newEmail, "changeEmail");
+        if (!code.equals(stringRedisTemplate.opsForValue().get(emailCodeKey)) || !Boolean.TRUE.equals(stringRedisTemplate.hasKey(emailCodeKey))) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "验证码错误或已过期");
+        }
+        if (Boolean.TRUE.equals(this.lambdaQuery().eq(User::getEmail, newEmail).exists())) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "该邮箱已被注册");
+        }
+        // 更新邮箱
+        User user = new User();
+        user.setId(currentUser.getId());
+        user.setEmail(newEmail);
+        boolean result = this.updateById(user);
+        if (!result) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR);
+        }
+        // 删除验证码
+        stringRedisTemplate.delete(emailCodeKey);
         return true;
     }
 }
