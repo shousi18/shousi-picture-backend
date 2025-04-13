@@ -54,14 +54,14 @@ public class TagCategoryRefreshJob {
             // 刷新标签缓存
             List<TagVO> tagVOS = tagService.listHotTags();
             stringRedisTemplate.opsForValue().set(
-                    RedisKeyConstant.PICTURE_TAG_LIST,
+                    RedisKeyConstant.PICTURE_HOT_TAG_LIST,
                     JSONUtil.toJsonStr(tagVOS),
                     30, // 设置过期时间为30天
                     TimeUnit.DAYS
             );
             List<CategoryVO> categoryVOS = categoryService.listHotCategories();
             stringRedisTemplate.opsForValue().set(
-                    RedisKeyConstant.PICTURE_CATEGORY_LIST,
+                    RedisKeyConstant.PICTURE_HOT_CATEGORY_LIST,
                     JSONUtil.toJsonStr(categoryVOS),
                     30,
                     TimeUnit.DAYS

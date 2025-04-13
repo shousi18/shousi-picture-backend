@@ -52,4 +52,10 @@ public interface CategoryService extends IService<Category> {
      * @return
      */
     Long getDefaultCategoryId();
+
+    /**
+     * 获取所有分类
+     * @return
+     */
+    List<CategoryVO> listCategories();
 }

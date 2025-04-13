@@ -54,4 +54,10 @@ public interface TagService extends IService<Tag> {
      * @return
      */
     List<Long> getDefaultTagIds();
+
+    /**
+     * 获取所有标签
+     * @return
+     */
+    List<TagVO> listTags();
 }

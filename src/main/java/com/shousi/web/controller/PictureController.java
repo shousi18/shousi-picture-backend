@@ -369,6 +369,9 @@ public class PictureController {
         if (CollUtil.isEmpty(tagIds)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "至少选择一个标签");
         }
+        if (tagIds.size() > 5) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "最多选择5个标签");
+        }
         Long categoryId = pictureEditRequest.getCategoryId();
         if (categoryId == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "请选择一个分类");

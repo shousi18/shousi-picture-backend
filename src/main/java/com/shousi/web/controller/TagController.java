@@ -32,6 +32,7 @@ public class TagController {
     private StringRedisTemplate stringRedisTemplate;
 
     @PostMapping("/add")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Long> addTag(@RequestBody TagAddRequest tagAddRequest) {
         ThrowUtils.throwIf(tagAddRequest == null, ErrorCode.PARAMS_ERROR);
         Long tagId = tagService.addTag(tagAddRequest);
@@ -40,11 +41,27 @@ public class TagController {
 
     @GetMapping("/list/hot")
     public BaseResponse<List<TagVO>> listHotTags() {
-        String tagList = stringRedisTemplate.opsForValue().get(RedisKeyConstant.PICTURE_TAG_LIST);
+        String tagList = stringRedisTemplate.opsForValue().get(RedisKeyConstant.PICTURE_HOT_TAG_LIST);
         if (StrUtil.isNotBlank(tagList)) {
             return ResultUtils.success(JSONUtil.toList(tagList, TagVO.class));
         }
         List<TagVO> tagVOList = tagService.listHotTags();
+        stringRedisTemplate.opsForValue().set(
+                RedisKeyConstant.PICTURE_HOT_TAG_LIST,
+                JSONUtil.toJsonStr(tagVOList),
+                30,
+                TimeUnit.DAYS
+        );
+        return ResultUtils.success(tagVOList);
+    }
+
+    @GetMapping("/list")
+    public BaseResponse<List<TagVO>> listTags() {
+        String tagList = stringRedisTemplate.opsForValue().get(RedisKeyConstant.PICTURE_TAG_LIST);
+        if (StrUtil.isNotBlank(tagList)) {
+            return ResultUtils.success(JSONUtil.toList(tagList, TagVO.class));
+        }
+        List<TagVO> tagVOList = tagService.listTags();
         stringRedisTemplate.opsForValue().set(
                 RedisKeyConstant.PICTURE_TAG_LIST,
                 JSONUtil.toJsonStr(tagVOList),

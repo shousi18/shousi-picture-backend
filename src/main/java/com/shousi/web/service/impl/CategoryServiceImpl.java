@@ -44,7 +44,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category>
 
     @Override
     public List<CategoryVO> listHotCategories() {
-        // // 查询最热门前十个分类
+        // 查询最热门前十个分类
         LambdaQueryWrapper<Category> queryWrapper = new QueryWrapper<Category>().lambda()
                 .orderByDesc(Category::getTotalNum)
                 .last("limit 6");
@@ -98,6 +98,16 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category>
         }
         this.incrementCategoryCount(defaultCategory.getId());
         return defaultCategory.getId();
+    }
+
+    @Override
+    public List<CategoryVO> listCategories() {
+        List<Category> list = this.list();
+        if (list == null) {
+            return new ArrayList<>();
+        }
+        return list.stream().map(this::convertToVO)
+                .collect(Collectors.toList());
     }
 }
 

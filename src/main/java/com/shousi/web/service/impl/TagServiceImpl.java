@@ -101,6 +101,16 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag>
     }
 
     @Override
+    public List<TagVO> listTags() {
+        List<Tag> list = this.list();
+        if (list == null) {
+            return new ArrayList<>();
+        }
+        return list.stream().map(this::convertToVO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public TagVO convertToVO(Tag tag) {
         ThrowUtils.throwIf(tag == null, ErrorCode.PARAMS_ERROR);
         TagVO tagVO = new TagVO();
