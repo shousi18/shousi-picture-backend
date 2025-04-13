@@ -225,6 +225,7 @@ public class PictureController {
         // 空间权限校验，空间的图片仅本人可以查看
         Space space = null;
         Long spaceId = picture.getSpaceId();
+        Long pictureUserId = picture.getUserId();
         if (spaceId != null) {
             boolean hasPermission = StpKit.SPACE.hasPermission(SpaceUserPermissionConstant.PICTURE_VIEW);
             ThrowUtils.throwIf(!hasPermission, ErrorCode.NO_AUTH_ERROR);
@@ -233,7 +234,7 @@ public class PictureController {
         }
         // 获取权限列表
         User loginUser = userService.getLoginUser(request);
-        List<String> permissionList = spaceUserAuthManager.getPermissionList(space, loginUser);
+        List<String> permissionList = spaceUserAuthManager.getPermissionList(space, loginUser, pictureUserId);
         PictureVO pictureVO = pictureService.getPictureVO(picture, request);
         pictureVO.setPermissionList(permissionList);
         // 获取封装类
@@ -263,13 +264,17 @@ public class PictureController {
                                                              HttpServletRequest request) {
         long current = pictureQueryRequest.getCurrent();
         long size = pictureQueryRequest.getPageSize();
+        Long userId = pictureQueryRequest.getUserId();
         // 限制爬虫
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
         // 空间权限校验
         if (pictureQueryRequest.getSpaceId() == null) {
             // 公共图库
             // 控制内容可见性，普通用户只能看见已经审核的
-            pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+            if (userId == null) {
+                pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+            }
+            pictureQueryRequest.setReviewStatus(pictureQueryRequest.getReviewStatus());
             pictureQueryRequest.setNullSpaceId(true);
         } else {
             // 私有图库

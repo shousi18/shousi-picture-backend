@@ -215,4 +215,12 @@ public class UserController {
         return ResultUtils.success(userVOPage);
     }
 
+    @PostMapping("/exchange/member")
+    public BaseResponse<Boolean> exchangeMember(@RequestBody ExchangeMemberRequest exchangeMemberRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(exchangeMemberRequest == null, ErrorCode.PARAMS_ERROR);
+        String code = exchangeMemberRequest.getCode();
+        User loginUser = userService.getLoginUser(request);
+        boolean result = userService.exchangeMember(code, loginUser);
+        return ResultUtils.success(result);
+    }
 }

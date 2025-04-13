@@ -154,4 +154,12 @@ public interface UserService extends IService<User> {
      * @return
      */
     boolean updateUserEmail(UserUpdateEmailRequest userUpdateRequest, User currentUser);
+
+    /**
+     * 兑换会员
+     * @param code
+     * @param loginUser
+     * @return
+     */
+    boolean exchangeMember(String code, User loginUser);
 }

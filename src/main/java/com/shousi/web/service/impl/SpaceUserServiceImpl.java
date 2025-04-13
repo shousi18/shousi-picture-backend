@@ -9,6 +9,7 @@ import com.shousi.web.exception.BusinessException;
 import com.shousi.web.exception.ErrorCode;
 import com.shousi.web.exception.ThrowUtils;
 import com.shousi.web.mapper.SpaceUserMapper;
+import com.shousi.web.model.dto.spaceuser.HandleInvitationRequest;
 import com.shousi.web.model.dto.spaceuser.SpaceUserAddRequest;
 import com.shousi.web.model.dto.spaceuser.SpaceUserQueryRequest;
 import com.shousi.web.model.entity.Space;
@@ -27,7 +28,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -92,7 +92,7 @@ public class SpaceUserServiceImpl extends ServiceImpl<SpaceUserMapper, SpaceUser
     }
 
     @Override
-    public SpaceUserVO getSpaceUserVO(SpaceUser spaceUser, HttpServletRequest request) {
+    public SpaceUserVO getSpaceUserVO(SpaceUser spaceUser) {
         // 对象转封装类
         SpaceUserVO spaceUserVO = SpaceUserVO.objToVo(spaceUser);
         // 关联查询用户信息
@@ -106,7 +106,7 @@ public class SpaceUserServiceImpl extends ServiceImpl<SpaceUserMapper, SpaceUser
         Long spaceId = spaceUser.getSpaceId();
         if (spaceId != null && spaceId > 0) {
             Space space = spaceService.getById(spaceId);
-            SpaceVO spaceVO = spaceService.getSpaceVO(space, request);
+            SpaceVO spaceVO = spaceService.getSpaceVO(space);
             spaceUserVO.setSpace(spaceVO);
         }
         return spaceUserVO;
@@ -168,6 +168,40 @@ public class SpaceUserServiceImpl extends ServiceImpl<SpaceUserMapper, SpaceUser
         queryWrapper.eq(ObjUtil.isNotEmpty(createUserId), "createUserId", createUserId);
         queryWrapper.eq(ObjUtil.isNotEmpty(spaceRole), "spaceRole", spaceRole);
         return queryWrapper;
+    }
+
+    @Override
+    public List<SpaceUserVO> getPendingInvitations(User loginUser) {
+        Long userId = loginUser.getId();
+        QueryWrapper<SpaceUser> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("userId", userId)
+                .eq("inviteStatus", 0)
+                .orderByDesc("createTime");
+        List<SpaceUser> spaceUserList = this.list(queryWrapper);
+
+        return spaceUserList.stream()
+                .map(this::getSpaceUserVO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Boolean handleInvitation(HandleInvitationRequest handleInvitationRequest, User loginUser) {
+        Integer status = handleInvitationRequest.getStatus();
+        Long id = handleInvitationRequest.getId();
+        ThrowUtils.throwIf(ObjectUtil.hasEmpty(status, id), ErrorCode.PARAMS_ERROR);
+        QueryWrapper<SpaceUser> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("id", id)
+                .eq("inviteStatus", 0);
+        SpaceUser spaceUser = this.getOne(queryWrapper);
+        ThrowUtils.throwIf(ObjectUtil.isEmpty(spaceUser), ErrorCode.OPERATION_ERROR, "该邀请不存在");
+        if (status == SpaceUserInviteStatusEnum.AGREE.getValue()) {
+            spaceUser.setInviteStatus(SpaceUserInviteStatusEnum.AGREE.getValue());
+        } else if (status == SpaceUserInviteStatusEnum.REJECT.getValue()) {
+            spaceUser.setInviteStatus(SpaceUserInviteStatusEnum.REJECT.getValue());
+        } else {
+            ThrowUtils.throwIf(true, ErrorCode.PARAMS_ERROR, "状态错误");
+        }
+        return this.updateById(spaceUser);
     }
 }
 

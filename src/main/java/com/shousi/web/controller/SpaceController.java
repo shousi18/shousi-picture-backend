@@ -125,8 +125,8 @@ public class SpaceController {
         Space space = spaceService.getById(id);
         ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR);
 //        spaceService.checkSpaceAuth(loginUser, space);
-        List<String> permissionList = spaceUserAuthManager.getPermissionList(space, loginUser);
-        SpaceVO spaceVO = spaceService.getSpaceVO(space, request);
+        List<String> permissionList = spaceUserAuthManager.getPermissionList(space, loginUser, null);
+        SpaceVO spaceVO = spaceService.getSpaceVO(space);
         spaceVO.setPermissionList(permissionList);
         // 获取封装类
         return ResultUtils.success(spaceVO);
@@ -204,6 +204,5 @@ public class SpaceController {
                 .collect(Collectors.toList());
         return ResultUtils.success(spaceLevelList);
     }
-
 }
 

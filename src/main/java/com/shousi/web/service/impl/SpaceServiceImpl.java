@@ -74,7 +74,14 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         // 2.校验参数
         validSpace(space, true);
         // 3.校验权限，非管理员只能创建普通级别的空间
-        if (!userService.isAdmin(loginUser) && space.getSpaceLevel() != SpaceLevelEnum.COMMON.getValue()) {
+        if (loginUser.getUserRole().equals(UserRoleEnum.USER.getValue()) && space.getSpaceLevel() == SpaceLevelEnum.FLAGSHIP.getValue()) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限创建指定级别的空间");
+        }
+        if (loginUser.getUserRole().equals(UserRoleEnum.USER.getValue()) && space.getSpaceLevel() == SpaceLevelEnum.PROFESSIONAL.getValue()) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限创建指定级别的空间");
+        }
+        // vip只是不能创建旗舰版空间
+        if (loginUser.getUserRole().equals(UserRoleEnum.VIP.getValue()) && space.getSpaceLevel() == SpaceLevelEnum.FLAGSHIP.getValue()) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限创建指定级别的空间");
         }
         // 4.控制同一用户只能创建一个私有空间
@@ -146,7 +153,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
     }
 
     @Override
-    public SpaceVO getSpaceVO(Space space, HttpServletRequest request) {
+    public SpaceVO getSpaceVO(Space space) {
         // 对象转封装类
         SpaceVO spaceVO = SpaceVO.objToVo(space);
         // 关联查询用户信息

@@ -4,10 +4,14 @@ import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.ShearCaptcha;
 import cn.hutool.captcha.generator.RandomGenerator;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.DigestUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.shousi.web.exception.BusinessException;
@@ -21,6 +25,7 @@ import com.shousi.web.model.dto.file.UploadPictureResult;
 import com.shousi.web.model.dto.user.UserQueryRequest;
 import com.shousi.web.model.dto.user.UserUpdateEmailRequest;
 import com.shousi.web.model.dto.user.UserUpdatePasswordRequest;
+import com.shousi.web.model.dto.user.VipCode;
 import com.shousi.web.model.entity.User;
 import com.shousi.web.model.eums.UserRoleEnum;
 import com.shousi.web.model.vo.LoginUserVO;
@@ -29,6 +34,7 @@ import com.shousi.web.service.UserService;
 import com.shousi.web.utils.SendMailUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
@@ -37,11 +43,15 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static com.shousi.web.constant.UserConstant.*;
+import static com.shousi.web.model.eums.UserRoleEnum.VIP;
 
 /**
  * @author 86172
@@ -61,6 +71,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+
+    @Resource
+    private ResourceLoader resourceLoader;
+
+    // 文件读写锁（确保并发安全）
+    private final ReentrantLock fileLock = new ReentrantLock();
 
     @Override
     public long userRegister(String email, String code, String userPassword, String checkPassword) {
@@ -389,6 +405,94 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         // 删除验证码
         stringRedisTemplate.delete(emailCodeKey);
         return true;
+    }
+
+    @Override
+    public boolean exchangeMember(String vipCode, User user) {
+        // 1. 参数校验
+        if (user == null || StrUtil.isBlank(vipCode)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        // 2. 读取并校验兑换码
+        VipCode targetCode = validateAndMarkVipCode(vipCode);
+        // 3. 更新用户信息
+        updateUserVipInfo(user, targetCode.getCode());
+        return true;
+    }
+
+    /**
+     * 校验兑换码并标记为已使用
+     */
+    private VipCode validateAndMarkVipCode(String vipCode) {
+        fileLock.lock(); // 加锁保证文件操作原子性
+        try {
+            // 读取 JSON 文件
+            JSONArray jsonArray = readVipCodeFile();
+
+            // 查找匹配的未使用兑换码
+            List<VipCode> codes = JSONUtil.toList(jsonArray, VipCode.class);
+            VipCode target = codes.stream()
+                    .filter(code -> code.getCode().equals(vipCode) && !code.isHasUsed())
+                    .findFirst()
+                    .orElseThrow(() -> new BusinessException(ErrorCode.PARAMS_ERROR, "无效的兑换码"));
+
+            // 标记为已使用
+            target.setHasUsed(true);
+
+            // 写回文件
+            writeVipCodeFile(JSONUtil.parseArray(codes));
+            return target;
+        } finally {
+            fileLock.unlock();
+        }
+    }
+
+    /**
+     * 读取兑换码文件
+     */
+    private JSONArray readVipCodeFile() {
+        try {
+            org.springframework.core.io.Resource resource = resourceLoader.getResource("classpath:biz/vipCode.json");
+            String content = FileUtil.readString(resource.getFile(), StandardCharsets.UTF_8);
+            return JSONUtil.parseArray(content);
+        } catch (IOException e) {
+            log.error("读取兑换码文件失败", e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "系统繁忙");
+        }
+    }
+
+    /**
+     * 写入兑换码文件
+     */
+    private void writeVipCodeFile(JSONArray jsonArray) {
+        try {
+            org.springframework.core.io.Resource resource = resourceLoader.getResource("classpath:biz/vipCode.json");
+            FileUtil.writeString(jsonArray.toStringPretty(), resource.getFile(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            log.error("更新兑换码文件失败", e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "系统繁忙");
+        }
+    }
+
+    /**
+     * 更新用户会员信息
+     */
+    private void updateUserVipInfo(User user, String usedVipCode) {
+        // 计算过期时间（当前时间 + 1 年）
+        Date expireTime = DateUtil.offsetMonth(new Date(), 12); // 计算当前时间加 1 年后的时间
+
+        // 构建更新对象
+        User updateUser = new User();
+        updateUser.setId(user.getId());
+        updateUser.setVipExpireTime(expireTime); // 设置过期时间
+        updateUser.setVipCode(usedVipCode);     // 记录使用的兑换码
+        updateUser.setUserRole(VIP.getValue());       // 修改用户角色
+
+        // 执行更新
+        boolean updated = this.updateById(updateUser);
+        if (!updated) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "开通会员失败，操作数据库失败");
+        }
     }
 }
 

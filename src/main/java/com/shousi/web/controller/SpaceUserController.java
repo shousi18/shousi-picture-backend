@@ -8,6 +8,7 @@ import com.shousi.web.exception.ErrorCode;
 import com.shousi.web.exception.ThrowUtils;
 import com.shousi.web.manager.auth.annotation.SaSpaceCheckPermission;
 import com.shousi.web.manager.auth.constant.SpaceUserPermissionConstant;
+import com.shousi.web.model.dto.spaceuser.HandleInvitationRequest;
 import com.shousi.web.model.dto.spaceuser.SpaceUserAddRequest;
 import com.shousi.web.model.dto.spaceuser.SpaceUserEditRequest;
 import com.shousi.web.model.dto.spaceuser.SpaceUserQueryRequest;
@@ -20,10 +21,7 @@ import com.shousi.web.service.UserService;
 import com.shousi.web.utils.ResultUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -144,5 +142,23 @@ public class SpaceUserController {
                 spaceUserService.getQueryWrapper(spaceUserQueryRequest)
         );
         return ResultUtils.success(spaceUserService.getSpaceUserVOList(spaceUserList));
+    }
+
+    @GetMapping("/invitations")
+    public BaseResponse<List<SpaceUserVO>> getPendingInvitations(HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        return ResultUtils.success(spaceUserService.getPendingInvitations(loginUser));
+    }
+
+    @PostMapping("/handleInvitation")
+    public BaseResponse<Boolean> handleInvitation(@RequestBody HandleInvitationRequest handleInvitationRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(handleInvitationRequest == null, ErrorCode.PARAMS_ERROR);
+        Integer status = handleInvitationRequest.getStatus();
+        Long id = handleInvitationRequest.getId();
+        ThrowUtils.throwIf(ObjectUtil.hasEmpty(status, id), ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        Boolean result = spaceUserService.handleInvitation(handleInvitationRequest, loginUser);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        return ResultUtils.success(result);
     }
 }

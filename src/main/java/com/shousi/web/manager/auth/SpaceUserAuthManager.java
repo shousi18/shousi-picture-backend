@@ -1,6 +1,7 @@
 package com.shousi.web.manager.auth;
 
 import cn.hutool.core.io.resource.ResourceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.shousi.web.manager.auth.model.SpaceUserAuthConfig;
 import com.shousi.web.manager.auth.model.SpaceUserRole;
@@ -60,7 +61,7 @@ public class SpaceUserAuthManager {
      * @param loginUser
      * @return
      */
-    public List<String> getPermissionList(Space space, User loginUser) {
+    public List<String> getPermissionList(Space space, User loginUser, Long pictureUserId) {
         if (loginUser == null) {
             return new ArrayList<>();
         }
@@ -70,6 +71,9 @@ public class SpaceUserAuthManager {
         if (space == null) {
             // 如果是管理员，则返回所有权限
             if (userService.isAdmin(loginUser)) {
+                return ADMIN_PERMISSIONS;
+            }
+            if (ObjectUtil.equal(pictureUserId, loginUser.getId())) {
                 return ADMIN_PERMISSIONS;
             }
             return new ArrayList<>();
