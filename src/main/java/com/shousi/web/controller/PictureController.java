@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.shousi.web.annotation.AuthCheck;
+import com.shousi.web.annotation.Log;
 import com.shousi.web.api.aliyunai.AliYunAiApi;
 import com.shousi.web.api.aliyunai.model.CreateOutPaintingTaskResponse;
 import com.shousi.web.api.aliyunai.model.GetOutPaintingTaskResponse;
@@ -32,6 +33,7 @@ import com.shousi.web.model.dto.picture.*;
 import com.shousi.web.model.entity.Picture;
 import com.shousi.web.model.entity.Space;
 import com.shousi.web.model.entity.User;
+import com.shousi.web.model.eums.BusinessType;
 import com.shousi.web.model.eums.PictureReviewStatusEnum;
 import com.shousi.web.model.vo.PictureVO;
 import com.shousi.web.service.*;
@@ -102,6 +104,7 @@ public class PictureController {
      */
     @PostMapping("/upload")
     @SaSpaceCheckPermission(value = SpaceUserPermissionConstant.PICTURE_UPLOAD)
+    @Log(title = "图片模块 - 上传图片", businessType = BusinessType.INSERT)
     public BaseResponse<PictureVO> uploadPicture(
             @RequestPart("file") MultipartFile multipartFile,
             PictureUploadRequest pictureUploadRequest,
@@ -116,6 +119,7 @@ public class PictureController {
      */
     @PostMapping("/upload/url")
     @SaSpaceCheckPermission(value = SpaceUserPermissionConstant.PICTURE_UPLOAD)
+    @Log(title = "图片模块 - 上传图片(url)", businessType = BusinessType.INSERT)
     public BaseResponse<PictureVO> uploadPictureByUrl(
             @RequestBody PictureUploadRequest pictureUploadRequest,
             HttpServletRequest request) {
@@ -154,6 +158,7 @@ public class PictureController {
      */
     @PostMapping("/delete")
     @SaSpaceCheckPermission(value = SpaceUserPermissionConstant.PICTURE_DELETE)
+    @Log(title = "图片模块 - 删除图片", businessType = BusinessType.DELETE)
     @Transactional
     public BaseResponse<Boolean> deletePicture(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
         if (deleteRequest == null || deleteRequest.getId() <= 0) {
@@ -343,6 +348,7 @@ public class PictureController {
      */
     @PostMapping("/edit")
     @SaSpaceCheckPermission(value = SpaceUserPermissionConstant.PICTURE_EDIT)
+    @Log(title = "图片模块 - 编辑图片", businessType = BusinessType.UPDATE)
     @Transactional
     public BaseResponse<Boolean> editPicture(@RequestBody PictureEditRequest pictureEditRequest, HttpServletRequest request) {
         if (pictureEditRequest == null || pictureEditRequest.getId() <= 0) {

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shousi.web.mapper.SysOperaLogMapper">
+
+    <resultMap id="BaseResultMap" type="com.shousi.web.model.entity.SysOperaLog">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="title" column="title" jdbcType="VARCHAR"/>
+            <result property="businessType" column="businessType" jdbcType="VARCHAR"/>
+            <result property="method" column="method" jdbcType="VARCHAR"/>
+            <result property="requestMethod" column="requestMethod" jdbcType="VARCHAR"/>
+            <result property="operatorType" column="operatorType" jdbcType="VARCHAR"/>
+            <result property="operaId" column="operaId" jdbcType="BIGINT"/>
+            <result property="operaUrl" column="operaUrl" jdbcType="VARCHAR"/>
+            <result property="operaIp" column="operaIp" jdbcType="VARCHAR"/>
+            <result property="operaParam" column="operaParam" jdbcType="VARCHAR"/>
+            <result property="jsonResult" column="jsonResult" jdbcType="VARCHAR"/>
+            <result property="status" column="status" jdbcType="INTEGER"/>
+            <result property="errorMsg" column="errorMsg" jdbcType="VARCHAR"/>
+            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+            <result property="editTime" column="editTime" jdbcType="TIMESTAMP"/>
+            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,title,businessType,
+        method,requestMethod,operatorType,
+        operaId,deptName,operaUrl,
+        operaIp,operaParam,jsonResult,
+        status,errorMsg,operaTime,
+        createTime,editTime,updateTime,
+        isDelete
+    </sql>
+</mapper>
