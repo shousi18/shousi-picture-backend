@@ -14,6 +14,7 @@ import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.shousi.web.constant.RedissonKeyConstant;
 import com.shousi.web.exception.BusinessException;
 import com.shousi.web.exception.ErrorCode;
 import com.shousi.web.exception.ThrowUtils;
@@ -33,6 +34,8 @@ import com.shousi.web.model.vo.UserVO;
 import com.shousi.web.service.UserService;
 import com.shousi.web.utils.SendMailUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RBitSet;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -45,6 +48,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.Year;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
@@ -74,6 +79,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Resource
     private ResourceLoader resourceLoader;
+
+    @Resource
+    private RedissonClient redissonClient;
 
     // 文件读写锁（确保并发安全）
     private final ReentrantLock fileLock = new ReentrantLock();
@@ -418,6 +426,42 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         // 3. 更新用户信息
         updateUserVipInfo(user, targetCode.getCode());
         return true;
+    }
+
+    @Override
+    public boolean addUserSignIn(long userId) {
+        LocalDate date = LocalDate.now();
+        String key = RedissonKeyConstant.getUserSignInRedisKey(date.getYear(), userId);
+        RBitSet signInBitSet = redissonClient.getBitSet(key);
+        int offset = date.getDayOfYear();
+        // 检查当天是否签到
+        if (!signInBitSet.get(offset)) {
+            // 没有签到，设置
+            return signInBitSet.set(offset, true);
+        }
+        // 已签到
+        return false;
+    }
+
+    @Override
+    public List<Integer> getUserSignInRecord(long userId, Integer year) {
+        if (year == null) {
+            year = LocalDate.now().getYear();
+        }
+        String key = RedissonKeyConstant.getUserSignInRedisKey(year, userId);
+        RBitSet signInBitSet = redissonClient.getBitSet(key);
+        // 加载 BitSet 到内存中，避免发送多次请求
+        BitSet bitSet = signInBitSet.asBitSet();
+        // 统计签到的日期
+        List<Integer> dayList = new ArrayList<>();
+        // 从索引0开始查找下一个被设置为1的位
+        int index = bitSet.nextSetBit(0);
+        while (index >= 0) {
+            dayList.add(index);
+            // 查找下一个被设置为1的位
+            index = bitSet.nextSetBit(index + 1);
+        }
+        return dayList;
     }
 
     /**

@@ -21,6 +21,11 @@ spring:
     protocol:
     username:
     password:
+    properties:
+      mail:
+        stmp:
+          ssl:
+            enable: true
   # 开放更大的文件上传体积
   servlet:
     multipart:
@@ -29,6 +34,7 @@ spring:
     port: 6379
     host: localhost
     database: 10
+    timeout: 2000
   # session配置
   session:
     store-type: redis
