@@ -433,13 +433,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         LocalDate date = LocalDate.now();
         String key = RedissonKeyConstant.getUserSignInRedisKey(date.getYear(), userId);
         RBitSet signInBitSet = redissonClient.getBitSet(key);
-        int offset = date.getDayOfYear();
+        long offset = date.getDayOfYear();
         // 检查当天是否签到
         if (!signInBitSet.get(offset)) {
             // 没有签到，设置
-            return signInBitSet.set(offset, true);
+            try {
+                signInBitSet.set(offset, true);
+                return true;
+            } catch (Exception e) {
+                throw new BusinessException(ErrorCode.OPERATION_ERROR, "签到失败");
+            }
         }
-        // 已签到
+        // 已经签到过了
         return false;
     }
 

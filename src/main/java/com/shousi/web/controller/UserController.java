@@ -237,8 +237,9 @@ public class UserController {
         User loginUser = userService.getLoginUser(request);
         boolean result = userService.addUserSignIn(loginUser.getId());
         if (!result) {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "你当天已经签过到了，请勿重复签到");
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "您今天已经签到过了");
         }
+        // todo 添加积分操作
         return ResultUtils.success(result);
     }
 
