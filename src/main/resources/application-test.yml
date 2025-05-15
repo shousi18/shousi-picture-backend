@@ -6,6 +6,7 @@ server:
       # cookie 30天后过期
       cookie:
         max-age: 2592000
+        domain:
 spring:
   application:
     name: shousi-picture-backend

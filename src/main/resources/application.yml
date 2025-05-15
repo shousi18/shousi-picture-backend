@@ -1,11 +1,3 @@
-server:
-  port: 8678
-  servlet:
-    context-path: /api
-    session:
-      # cookie 30天后过期
-      cookie:
-        max-age: 2592000
 spring:
   profiles:
     active: local

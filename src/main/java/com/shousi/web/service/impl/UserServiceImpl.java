@@ -431,6 +431,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     @Override
     public boolean addUserSignIn(long userId) {
         LocalDate date = LocalDate.now();
+        // 年份 + userId
         String key = RedissonKeyConstant.getUserSignInRedisKey(date.getYear(), userId);
         RBitSet signInBitSet = redissonClient.getBitSet(key);
         long offset = date.getDayOfYear();

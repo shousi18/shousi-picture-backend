@@ -58,8 +58,8 @@ public abstract class PictureUploadTemplate {
     /**
      * 图片上传方法模板
      *
-     * @param inputSource
-     * @param uploadPathPrefix
+     * @param inputSource 文件类型（url/图片文件）
+     * @param uploadPathPrefix 文件地址前缀（放到对应的文件夹）
      * @return
      */
     public UploadPictureResult uploadPicture(Object inputSource, String uploadPathPrefix) {
