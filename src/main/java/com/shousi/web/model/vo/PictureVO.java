@@ -126,7 +126,12 @@ public class PictureVO implements Serializable {
     /**  
      * 创建用户信息  
      */  
-    private UserVO user;  
+    private UserVO user;
+
+    /**
+     * 点赞总数
+     */
+    private Long thumbCount;
   
     private static final long serialVersionUID = 1L;
 }

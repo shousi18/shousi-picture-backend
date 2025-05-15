@@ -60,6 +60,11 @@ public class Picture implements Serializable {
     private String picColor;
 
     /**
+     * 点赞总数
+     */
+    private Long thumbCount;
+
+    /**
      * 标签
      */
     @TableField(exist = false)
