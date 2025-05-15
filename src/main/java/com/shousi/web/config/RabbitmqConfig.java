@@ -2,6 +2,7 @@ package com.shousi.web.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.shousi.web.constant.ThumbMQConstant;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.DirectExchange;
@@ -16,11 +17,11 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitmqConfig {
 
-    public static final String EXCHANGE_NAME = "picture.exchange";
+    public static final String EXCHANGE_NAME = ThumbMQConstant.EXCHANGE_NAME;
 
-    public static final String QUEUE_NAME = "picture.queue";
+    public static final String QUEUE_NAME = ThumbMQConstant.QUEUE_NAME;
 
-    public static final String ROUTING_KEY = "picture.routingKey";
+    public static final String ROUTING_KEY = ThumbMQConstant.ROUTING_KEY;
 
     @Bean
     public DirectExchange thumbExchange() {
