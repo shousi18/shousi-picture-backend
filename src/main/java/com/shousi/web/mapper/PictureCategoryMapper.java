@@ -16,6 +16,8 @@ import java.util.List;
 public interface PictureCategoryMapper extends BaseMapper<PictureCategory> {
 
     List<SpaceCategoryAnalyzeResponse> selectCategoryStatistics(@Param("pictureIdList") List<Long> pictureIdList);
+
+    String selectCategoryName(@Param("pictureId") Long pictureId);
 }
 
 

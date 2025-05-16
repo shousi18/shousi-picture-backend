@@ -77,6 +77,18 @@ public class Picture implements Serializable {
     private CategoryVO category;
 
     /**
+     * 标签名称
+     */
+    @TableField(exist = false)
+    private List<String> tagNames;
+
+    /**
+     * 分类名称
+     */
+    @TableField(exist = false)
+    private String categoryName;
+
+    /**
      * 图片原始 url
      */
     private String originUrl;

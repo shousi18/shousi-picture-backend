@@ -26,4 +26,11 @@
         </foreach>
         GROUP BY t.id
     </select>
+
+    <select id="selectTagName" resultType="java.lang.String">
+        SELECT t.tagName
+        FROM picture_tag pt
+                 INNER JOIN tag t ON pt.tagId = t.id
+        WHERE pt.pictureId = #{pictureId}
+    </select>
 </mapper>

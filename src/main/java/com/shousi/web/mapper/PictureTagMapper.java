@@ -16,6 +16,8 @@ import java.util.List;
 public interface PictureTagMapper extends BaseMapper<PictureTag> {
 
     List<SpaceTagAnalyzeResponse> selectTagStatistics(@Param("pictureIdList") List<Long> pictureIdList);
+
+    List<String> selectTagName(@Param("pictureId") Long pictureId);
 }
 
 

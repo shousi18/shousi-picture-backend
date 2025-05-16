@@ -24,7 +24,15 @@
         </foreach>
         GROUP BY c.id
     </select>
-    
+
+    <select id="selectCategoryName" resultType="java.lang.String">
+        SELECT c.categoryName AS name
+        FROM picture_category pc
+                 INNER JOIN category c ON pc.categoryId = c.id
+        WHERE pc.pictureId = #{pictureId}
+    </select>
+
+
     <sql id="Base_Column_List">
         id,categoryId,pictureId
     </sql>
