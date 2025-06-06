@@ -70,6 +70,11 @@ public class User implements Serializable {
     private Long vipNumber;
 
     /**
+     * 用户余额
+     */
+    private Integer balance;
+
+    /**
      * 分享码
      */
     private String shareCode;
