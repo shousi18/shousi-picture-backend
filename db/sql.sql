@@ -4,23 +4,23 @@
 -- ------------------------------------------------------
 -- Server version	8.0.32
 
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT = @@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS = @@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION = @@COLLATION_CONNECTION */;
 /*!50503 SET NAMES utf8mb4 */;
-/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
-/*!40103 SET TIME_ZONE='+00:00' */;
-/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+/*!40103 SET @OLD_TIME_ZONE = @@TIME_ZONE */;
+/*!40103 SET TIME_ZONE = '+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS = @@UNIQUE_CHECKS, UNIQUE_CHECKS = 0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS = @@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS = 0 */;
+/*!40101 SET @OLD_SQL_MODE = @@SQL_MODE, SQL_MODE = 'NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES = @@SQL_NOTES, SQL_NOTES = 0 */;
 
 --
 -- Table structure for table `category`
 --
 
 DROP TABLE IF EXISTS `category`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `category`
 (
@@ -32,8 +32,11 @@ CREATE TABLE `category`
     `updateTime`   datetime                                NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     `isDelete`     tinyint                                 NOT NULL DEFAULT '0' COMMENT '是否删除',
     PRIMARY KEY (`id`),
-    KEY            `idx_categoryName` (`categoryName`)
-) ENGINE=InnoDB AUTO_INCREMENT=1905816196589150266 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='分类表';
+    KEY `idx_categoryName` (`categoryName`)
+) ENGINE = InnoDB
+  AUTO_INCREMENT = 1905816196589150266
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci COMMENT ='分类表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -41,8 +44,9 @@ CREATE TABLE `category`
 --
 
 LOCK
-TABLES `category` WRITE;
-/*!40000 ALTER TABLE `category` DISABLE KEYS */;
+    TABLES `category` WRITE;
+/*!40000 ALTER TABLE `category`
+    DISABLE KEYS */;
 INSERT INTO `category`
 VALUES (1, '默认', 115, '2025-03-29 16:18:37', '2025-03-29 16:18:37', '2025-04-13 15:37:54', 0),
        (1905815752248778753, '热门', 0, '2025-03-29 10:54:18', '2025-03-29 10:54:18', '2025-04-07 22:22:51', 0),
@@ -110,16 +114,17 @@ VALUES (1, '默认', 115, '2025-03-29 16:18:37', '2025-03-29 16:18:37', '2025-04
        (1905816196589150263, '宗教哲学', 0, '2025-04-13 18:42:34', '2025-04-13 18:42:34', '2025-04-13 18:42:34', 0),
        (1905816196589150264, '军事历史', 0, '2025-04-13 18:42:34', '2025-04-13 18:42:34', '2025-04-13 18:42:34', 0),
        (1905816196589150265, '元宇宙虚拟', 0, '2025-04-13 18:42:34', '2025-04-13 18:42:34', '2025-04-13 18:42:34', 0);
-/*!40000 ALTER TABLE `category` ENABLE KEYS */;
+/*!40000 ALTER TABLE `category`
+    ENABLE KEYS */;
 UNLOCK
-TABLES;
+    TABLES;
 
 --
 -- Table structure for table `picture`
 --
 
 DROP TABLE IF EXISTS `picture`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `picture`
 (
@@ -132,7 +137,7 @@ CREATE TABLE `picture`
     `picSize`       bigint                                           DEFAULT NULL COMMENT '图片体积',
     `picWidth`      int                                              DEFAULT NULL COMMENT '图片宽度',
     `picHeight`     int                                              DEFAULT NULL COMMENT '图片高度',
-    `picScale` double DEFAULT NULL COMMENT '图片宽高比例',
+    `picScale`      double                                           DEFAULT NULL COMMENT '图片宽高比例',
     `picFormat`     varchar(32) COLLATE utf8mb4_unicode_ci           DEFAULT NULL COMMENT '图片格式',
     `userId`        bigint                                  NOT NULL COMMENT '创建用户 id',
     `createTime`    datetime                                NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -146,12 +151,15 @@ CREATE TABLE `picture`
     `spaceId`       bigint                                           DEFAULT NULL COMMENT '空间 id（为空表示公共空间）',
     `picColor`      varchar(16) COLLATE utf8mb4_unicode_ci           DEFAULT NULL COMMENT '图片主色调',
     PRIMARY KEY (`id`),
-    KEY             `idx_name` (`name`),
-    KEY             `idx_introduction` (`introduction`),
-    KEY             `idx_userId` (`userId`),
-    KEY             `idx_reviewStatus` (`reviewStatus`),
-    KEY             `idx_spaceId` (`spaceId`)
-) ENGINE=InnoDB AUTO_INCREMENT=1911322894426746883 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='图片';
+    KEY `idx_name` (`name`),
+    KEY `idx_introduction` (`introduction`),
+    KEY `idx_userId` (`userId`),
+    KEY `idx_reviewStatus` (`reviewStatus`),
+    KEY `idx_spaceId` (`spaceId`)
+) ENGINE = InnoDB
+  AUTO_INCREMENT = 1911322894426746883
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci COMMENT ='图片';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -159,8 +167,9 @@ CREATE TABLE `picture`
 --
 
 LOCK
-TABLES `picture` WRITE;
-/*!40000 ALTER TABLE `picture` DISABLE KEYS */;
+    TABLES `picture` WRITE;
+/*!40000 ALTER TABLE `picture`
+    DISABLE KEYS */;
 INSERT INTO `picture`
 VALUES (1907079632056823810,
         'https://shousi-1324630026.cos.ap-beijing.myqcloud.com/space/1/2025-04-01_5Y586hjzqX6usPh3.jpg',
@@ -506,16 +515,17 @@ VALUES (1907079632056823810,
         'https://shousi-1324630026.cos.ap-beijing.myqcloud.com/public/1903710021580038146/2025-04-13_hkTam4h92gl8mj7t.webp',
         '晴天！', '', 2858, 300, 300, 1, 'webp', 1903710021580038146, '2025-04-13 15:37:43', '2025-04-13 15:41:21',
         '2025-04-13 15:42:33', 0, 2, '不喜欢', 1903709990332473345, '2025-04-13 15:42:34', NULL, '0xe0e0e0');
-/*!40000 ALTER TABLE `picture` ENABLE KEYS */;
+/*!40000 ALTER TABLE `picture`
+    ENABLE KEYS */;
 UNLOCK
-TABLES;
+    TABLES;
 
 --
 -- Table structure for table `picture_category`
 --
 
 DROP TABLE IF EXISTS `picture_category`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `picture_category`
 (
@@ -523,9 +533,12 @@ CREATE TABLE `picture_category`
     `categoryId` bigint DEFAULT NULL COMMENT '分类id',
     `pictureId`  bigint NOT NULL COMMENT '图片id',
     PRIMARY KEY (`id`),
-    KEY          `idx_categoryId` (`categoryId`),
-    KEY          `idx_pictureId` (`pictureId`)
-) ENGINE=InnoDB AUTO_INCREMENT=1911395372058615810 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='图片分类关联表';
+    KEY `idx_categoryId` (`categoryId`),
+    KEY `idx_pictureId` (`pictureId`)
+) ENGINE = InnoDB
+  AUTO_INCREMENT = 1911395372058615810
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci COMMENT ='图片分类关联表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -533,8 +546,9 @@ CREATE TABLE `picture_category`
 --
 
 LOCK
-TABLES `picture_category` WRITE;
-/*!40000 ALTER TABLE `picture_category` DISABLE KEYS */;
+    TABLES `picture_category` WRITE;
+/*!40000 ALTER TABLE `picture_category`
+    DISABLE KEYS */;
 INSERT INTO `picture_category`
 VALUES (1905904559425888258, 1905816009393168385, 1905902832446427137),
        (1905905843403005953, 1905816009393168385, 1905905574011248641),
@@ -678,16 +692,17 @@ VALUES (1905904559425888258, 1905816009393168385, 1905902832446427137),
        (1911322884238782466, 1, 1911322884209422338),
        (1911323807270875138, 1905816036106690562, 1911322894426746882),
        (1911395372058615809, 1905816196589150259, 1911019182936346626);
-/*!40000 ALTER TABLE `picture_category` ENABLE KEYS */;
+/*!40000 ALTER TABLE `picture_category`
+    ENABLE KEYS */;
 UNLOCK
-TABLES;
+    TABLES;
 
 --
 -- Table structure for table `picture_tag`
 --
 
 DROP TABLE IF EXISTS `picture_tag`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `picture_tag`
 (
@@ -695,9 +710,12 @@ CREATE TABLE `picture_tag`
     `tagId`     bigint DEFAULT NULL COMMENT '标签id',
     `pictureId` bigint NOT NULL COMMENT '图片id',
     PRIMARY KEY (`id`),
-    KEY         `idx_tagId` (`tagId`),
-    KEY         `idx_pictureId` (`pictureId`)
-) ENGINE=InnoDB AUTO_INCREMENT=1911395372058615812 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='图片标签关联表';
+    KEY `idx_tagId` (`tagId`),
+    KEY `idx_pictureId` (`pictureId`)
+) ENGINE = InnoDB
+  AUTO_INCREMENT = 1911395372058615812
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci COMMENT ='图片标签关联表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -705,8 +723,9 @@ CREATE TABLE `picture_tag`
 --
 
 LOCK
-TABLES `picture_tag` WRITE;
-/*!40000 ALTER TABLE `picture_tag` DISABLE KEYS */;
+    TABLES `picture_tag` WRITE;
+/*!40000 ALTER TABLE `picture_tag`
+    DISABLE KEYS */;
 INSERT INTO `picture_tag`
 VALUES (1905904559425888257, 1905273137617108993, 1905902832446427137),
        (1905905843340091393, 1905273080708792321, 1905905574011248641),
@@ -871,16 +890,17 @@ VALUES (1905904559425888257, 1905273137617108993, 1905902832446427137),
        (1911323807262486529, 1905273204189102081, 1911322894426746882),
        (1911395372058615810, 1905273401602408481, 1911019182936346626),
        (1911395372058615811, 1905273401602408482, 1911019182936346626);
-/*!40000 ALTER TABLE `picture_tag` ENABLE KEYS */;
+/*!40000 ALTER TABLE `picture_tag`
+    ENABLE KEYS */;
 UNLOCK
-TABLES;
+    TABLES;
 
 --
 -- Table structure for table `space`
 --
 
 DROP TABLE IF EXISTS `space`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `space`
 (
@@ -898,10 +918,13 @@ CREATE TABLE `space`
     `isDelete`   tinyint  NOT NULL                       DEFAULT '0' COMMENT '是否删除',
     `spaceType`  int      NOT NULL                       DEFAULT '0' COMMENT '空间类型：0-私有 1-团队',
     PRIMARY KEY (`id`),
-    KEY          `idx_userId` (`userId`),
-    KEY          `idx_spaceName` (`spaceName`),
-    KEY          `idx_spaceLevel` (`spaceLevel`)
-) ENGINE=InnoDB AUTO_INCREMENT=1911349927739420674 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='空间';
+    KEY `idx_userId` (`userId`),
+    KEY `idx_spaceName` (`spaceName`),
+    KEY `idx_spaceLevel` (`spaceLevel`)
+) ENGINE = InnoDB
+  AUTO_INCREMENT = 1911349927739420674
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci COMMENT ='空间';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -909,8 +932,9 @@ CREATE TABLE `space`
 --
 
 LOCK
-TABLES `space` WRITE;
-/*!40000 ALTER TABLE `space` DISABLE KEYS */;
+    TABLES `space` WRITE;
+/*!40000 ALTER TABLE `space`
+    DISABLE KEYS */;
 INSERT INTO `space`
 VALUES (1, '寿司的旗舰版空间', 2, 10485760000, 10000, 496006, 9, 1903709990332473345, '2025-04-01 19:04:12',
         '2025-04-01 19:04:12', '2025-04-10 11:19:55', 0, 0),
@@ -934,16 +958,17 @@ VALUES (1, '寿司的旗舰版空间', 2, 10485760000, 10000, 496006, 9, 1903709
         '2025-04-13 15:47:24', '2025-04-13 15:47:24', 0, 1),
        (1911349927739420673, '我的vip空间', 1, 1048576000, 1000, 0, 0, 1910172945542623234, '2025-04-13 17:25:08',
         '2025-04-13 17:25:08', '2025-04-13 17:25:08', 0, 0);
-/*!40000 ALTER TABLE `space` ENABLE KEYS */;
+/*!40000 ALTER TABLE `space`
+    ENABLE KEYS */;
 UNLOCK
-TABLES;
+    TABLES;
 
 --
 -- Table structure for table `space_user`
 --
 
 DROP TABLE IF EXISTS `space_user`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `space_user`
 (
@@ -956,10 +981,13 @@ CREATE TABLE `space_user`
     `createTime`   datetime NOT NULL                       DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `updateTime`   datetime NOT NULL                       DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_spaceId_userId` (`spaceId`,`userId`),
-    KEY            `idx_spaceId` (`spaceId`),
-    KEY            `idx_userId` (`userId`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='空间用户关联';
+    UNIQUE KEY `uk_spaceId_userId` (`spaceId`, `userId`),
+    KEY `idx_spaceId` (`spaceId`),
+    KEY `idx_userId` (`userId`)
+) ENGINE = InnoDB
+  AUTO_INCREMENT = 13
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci COMMENT ='空间用户关联';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -967,8 +995,9 @@ CREATE TABLE `space_user`
 --
 
 LOCK
-TABLES `space_user` WRITE;
-/*!40000 ALTER TABLE `space_user` DISABLE KEYS */;
+    TABLES `space_user` WRITE;
+/*!40000 ALTER TABLE `space_user`
+    DISABLE KEYS */;
 INSERT INTO `space_user`
 VALUES (1, 1910171837726273537, 1910171180218789889, 'admin', 1, 1910171180218789889, '2025-04-10 11:23:50',
         '2025-04-10 11:24:16'),
@@ -992,16 +1021,17 @@ VALUES (1, 1910171837726273537, 1910171180218789889, 'admin', 1, 191017118021878
         '2025-04-13 18:19:46'),
        (12, 1910973767276908545, 1910171180218789889, 'viewer', 0, 1910676648250912770, '2025-04-13 18:20:12',
         '2025-04-13 18:20:12');
-/*!40000 ALTER TABLE `space_user` ENABLE KEYS */;
+/*!40000 ALTER TABLE `space_user`
+    ENABLE KEYS */;
 UNLOCK
-TABLES;
+    TABLES;
 
 --
 -- Table structure for table `tag`
 --
 
 DROP TABLE IF EXISTS `tag`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `tag`
 (
@@ -1013,7 +1043,10 @@ CREATE TABLE `tag`
     `updateTime` datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     `isDelete`   tinyint      NOT NULL DEFAULT '0' COMMENT '是否删除',
     PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1905273401602408571 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='标签表';
+) ENGINE = InnoDB
+  AUTO_INCREMENT = 1905273401602408571
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci COMMENT ='标签表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1021,8 +1054,9 @@ CREATE TABLE `tag`
 --
 
 LOCK
-TABLES `tag` WRITE;
-/*!40000 ALTER TABLE `tag` DISABLE KEYS */;
+    TABLES `tag` WRITE;
+/*!40000 ALTER TABLE `tag`
+    DISABLE KEYS */;
 INSERT INTO `tag`
 VALUES (1, '默认', 116, '2025-03-29 16:18:47', '2025-03-29 16:18:47', '2025-04-13 20:25:29', 0),
        (1905273080708792321, '搞笑', 9, '2025-03-27 22:57:55', '2025-03-27 22:57:55', '2025-04-13 20:25:29', 0),
@@ -1160,16 +1194,17 @@ VALUES (1, '默认', 116, '2025-03-29 16:18:47', '2025-03-29 16:18:47', '2025-04
        (1905273401602408568, '佛系青年', 0, '2025-04-13 18:35:34', '2025-04-13 18:35:34', '2025-04-13 18:35:34', 0),
        (1905273401602408569, '躺平族', 0, '2025-04-13 18:35:34', '2025-04-13 18:35:34', '2025-04-13 18:35:34', 0),
        (1905273401602408570, '内卷', 0, '2025-04-13 18:35:34', '2025-04-13 18:35:34', '2025-04-13 18:35:34', 0);
-/*!40000 ALTER TABLE `tag` ENABLE KEYS */;
+/*!40000 ALTER TABLE `tag`
+    ENABLE KEYS */;
 UNLOCK
-TABLES;
+    TABLES;
 
 --
 -- Table structure for table `user`
 --
 
 DROP TABLE IF EXISTS `user`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `user`
 (
@@ -1182,7 +1217,7 @@ CREATE TABLE `user`
     `userProfile`   varchar(512) COLLATE utf8mb4_unicode_ci          DEFAULT NULL COMMENT '用户简介',
     `userRole`      varchar(256) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'user' COMMENT '用户角色：user/admin',
     `vipExpireTime` datetime                                         DEFAULT NULL COMMENT '会员过期时间',
-    balance         int null comment '积分（用于兑换vip）',
+    balance         int                                     null     DEFAULT 0 comment '积分（用于兑换vip）',
     `vipCode`       varchar(128) COLLATE utf8mb4_unicode_ci          DEFAULT NULL COMMENT '会员兑换码',
     `vipNumber`     bigint                                           DEFAULT NULL COMMENT '会员编号',
     `shareCode`     varchar(20) COLLATE utf8mb4_unicode_ci           DEFAULT NULL COMMENT '分享码',
@@ -1193,8 +1228,11 @@ CREATE TABLE `user`
     `isDelete`      tinyint                                 NOT NULL DEFAULT '0' COMMENT '是否删除',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_userAccount` (`userAccount`),
-    KEY             `idx_userName` (`userName`)
-) ENGINE=InnoDB AUTO_INCREMENT=1910676648250912771 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户';
+    KEY `idx_userName` (`userName`)
+) ENGINE = InnoDB
+  AUTO_INCREMENT = 1910676648250912771
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci COMMENT ='用户';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 create table member
@@ -1215,8 +1253,9 @@ alter table member
 --
 
 LOCK
-TABLES `user` WRITE;
-/*!40000 ALTER TABLE `user` DISABLE KEYS */;
+    TABLES `user` WRITE;
+/*!40000 ALTER TABLE `user`
+    DISABLE KEYS */;
 INSERT INTO `user`
 VALUES (1903709990332473345, 'shousi1', 'cfa3fdf292d118ecd9dd6cd7ec11ce17', NULL, '寿司大大大',
         'https://shousi.oss-cn-beijing.aliyuncs.com/XqT3Nsto-psc.jfif', NULL, 'admin', NULL, NULL, NULL, NULL, NULL,
@@ -1238,17 +1277,18 @@ VALUES (1903709990332473345, 'shousi1', 'cfa3fdf292d118ecd9dd6cd7ec11ce17', NULL
         'https://shousi-1324630026.cos.ap-beijing.myqcloud.com//public/1910676648250912770/2025-04-11_FVcjLKHcDA7pNhDo.png',
         NULL, 'user', NULL, NULL, NULL, NULL, NULL, '2025-04-11 20:49:46', '2025-04-11 20:49:46', '2025-04-11 20:49:46',
         0);
-/*!40000 ALTER TABLE `user` ENABLE KEYS */;
+/*!40000 ALTER TABLE `user`
+    ENABLE KEYS */;
 UNLOCK
-TABLES;
-/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+    TABLES;
+/*!40103 SET TIME_ZONE = @OLD_TIME_ZONE */;
 
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+/*!40101 SET SQL_MODE = @OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS = @OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS = @OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT = @OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS = @OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION = @OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES = @OLD_SQL_NOTES */;
 
 -- Dump completed on 2025-04-13 21:27:52
