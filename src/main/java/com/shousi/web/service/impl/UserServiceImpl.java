@@ -13,6 +13,7 @@ import cn.hutool.crypto.digest.DigestUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.shousi.web.constant.RedissonKeyConstant;
 import com.shousi.web.exception.BusinessException;
@@ -440,6 +441,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             // 没有签到，设置
             try {
                 signInBitSet.set(offset, true);
+                // 并且添加积分
+                UpdateWrapper<User> wrapper = new UpdateWrapper<>();
+                wrapper.setSql("balance = balance + 10").eq("id", userId);
+                this.update(wrapper);
                 return true;
             } catch (Exception e) {
                 throw new BusinessException(ErrorCode.OPERATION_ERROR, "签到失败");
