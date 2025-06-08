@@ -54,6 +54,11 @@ public class LoginUserVO implements Serializable {
     private Long vipNumber;
 
     /**
+     * 余额
+     */
+    private Integer balance;
+
+    /**
      * 分享码
      */
     private String shareCode;

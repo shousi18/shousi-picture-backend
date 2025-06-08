@@ -38,4 +38,14 @@ public interface UserConstant {
      * 密码加盐值
      */
     String DEFAULT_SALT = "shousi";
+
+    /**
+     * 默认会员兑换积分
+     */
+    Integer DEFAULT_MEMBER_EXCHANGE_POINTS = 300;
+
+    /**
+     * 兑换会员时间（3天）
+     */
+    Integer EXCHANGE_MEMBER_TIME = 3;
 }
