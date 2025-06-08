@@ -191,4 +191,10 @@ public interface UserService extends IService<User> {
      * @return
      */
     boolean consumerMemberCode(String code, User user);
+    /**
+     * 兑换会员码
+     * @param loginUser
+     * @return
+     */
+    String getMemberCode(User loginUser);
 }

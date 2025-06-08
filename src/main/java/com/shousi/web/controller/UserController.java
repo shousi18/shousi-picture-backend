@@ -258,6 +258,7 @@ public class UserController {
         return ResultUtils.success(userSignInRecord);
     }
 
+
     @GetMapping("/consumer/membercode")
     public BaseResponse<Boolean> consumerMemberCode(@RequestParam String code, HttpServletRequest request) {
         if (StrUtil.isBlank(code)) {
@@ -270,5 +271,14 @@ public class UserController {
         }
         return ResultUtils.success(result);
     }
-
+    /**
+     * 会员码兑换会员
+     */
+    @GetMapping("/get/membercode")
+    public BaseResponse<String> getMemberCode(HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        // 兑换会员码
+        String result = userService.getMemberCode(loginUser);
+        return ResultUtils.success(result);
+    }
 }

@@ -41,6 +41,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -580,6 +581,35 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         // 删除兑换完的会员码
         memberService.removeById(member);
         return true;
+    }
+    @Override
+    @Transactional
+    public String getMemberCode(User loginUser) {
+        if (loginUser.getBalance() < DEFAULT_MEMBER_EXCHANGE_POINTS) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "积分余额不足");
+        }
+        LambdaQueryWrapper<Member> queryWrapper = new LambdaQueryWrapper<>();
+        // 获取没有用的会员码
+        queryWrapper.eq(Member::getUserId, 0L);
+        // 获取没有删除的会员码
+        queryWrapper.eq(Member::getIsDelete, 0L);
+        // 设置为false，当返回多条数据的时候返回第一条符合的数据
+        Member member = memberService.getOne(queryWrapper, false);
+        if (member == null) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "会员码已用完");
+        }
+        // 设置userId，并进行更新
+        member.setUserId(loginUser.getId());
+        member.setUpdateTime(new Date());
+        memberService.updateById(member);
+        // 更新用户余额
+        LambdaUpdateWrapper<User> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.setSql("balance = balance - 300").eq(User::getId, loginUser.getId());
+        boolean result = this.update(updateWrapper);
+        if (!result) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR);
+        }
+        return member.getVipCode();
     }
 }
 
