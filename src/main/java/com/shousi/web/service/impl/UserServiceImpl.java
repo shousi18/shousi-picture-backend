@@ -549,6 +549,38 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "开通会员失败，操作数据库失败");
         }
     }
+
+
+    @Override
+    @Transactional
+    public boolean consumerMemberCode(String code, User user) {
+        LambdaQueryWrapper<Member> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Member::getVipCode, code);
+        // 是自己的会员码才可以进行兑换
+        queryWrapper.eq(Member::getUserId, user.getId());
+        Member member = memberService.getOne(queryWrapper);
+        if (member == null) {
+            // 会员码不存在，或者不是自己的会员码
+            return false;
+        }
+        // 更新用户身份
+        // 如果用户本身就是会员，则延时会员时间
+        if (Objects.equals(user.getUserRole(), UserRoleEnum.VIP.getValue())) {
+            Date vipExpireTime = user.getVipExpireTime();
+            // 延时会员时间3天
+            vipExpireTime = DateUtil.offsetDay(vipExpireTime, EXCHANGE_MEMBER_TIME);
+            user.setVipExpireTime(vipExpireTime);
+            this.updateById(user);
+            return true;
+        }
+        // 不是会员，则设置为会员，并设置会员时间
+        user.setUserRole(UserRoleEnum.VIP.getValue());
+        user.setVipExpireTime(DateUtil.offsetDay(new Date(), EXCHANGE_MEMBER_TIME));
+        this.updateById(user);
+        // 删除兑换完的会员码
+        memberService.removeById(member);
+        return true;
+    }
 }
 
 

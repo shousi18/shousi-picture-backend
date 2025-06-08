@@ -44,9 +44,9 @@ public interface UserService extends IService<User> {
     /**
      * 用户登录
      *
-     * @param userAccountOrEmail  用户账户或邮箱
-     * @param userPassword 用户密码
-     * @param request      请求
+     * @param userAccountOrEmail 用户账户或邮箱
+     * @param userPassword       用户密码
+     * @param request            请求
      * @return 脱敏后的用户信息
      */
     LoginUserVO userLogin(String userAccountOrEmail, String userPassword, HttpServletRequest request);
@@ -142,6 +142,7 @@ public interface UserService extends IService<User> {
 
     /**
      * 验证图像验证码
+     *
      * @param verifyCode
      * @param verifyCodeId
      */
@@ -149,6 +150,7 @@ public interface UserService extends IService<User> {
 
     /**
      * 更新用户邮箱
+     *
      * @param userUpdateRequest
      * @param currentUser
      * @return
@@ -157,6 +159,7 @@ public interface UserService extends IService<User> {
 
     /**
      * 兑换会员
+     *
      * @param code
      * @param loginUser
      * @return
@@ -165,6 +168,7 @@ public interface UserService extends IService<User> {
 
     /**
      * 添加用户签到记录
+     *
      * @param userId
      * @return
      */
@@ -178,4 +182,13 @@ public interface UserService extends IService<User> {
      * @return 签到记录映射
      */
     List<Integer> getUserSignInRecord(long userId, Integer year);
+
+    /**
+     * 消耗会员码
+     *
+     * @param code
+     * @param user
+     * @return
+     */
+    boolean consumerMemberCode(String code, User user);
 }

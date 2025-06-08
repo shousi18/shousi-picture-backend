@@ -258,5 +258,17 @@ public class UserController {
         return ResultUtils.success(userSignInRecord);
     }
 
+    @GetMapping("/consumer/membercode")
+    public BaseResponse<Boolean> consumerMemberCode(@RequestParam String code, HttpServletRequest request) {
+        if (StrUtil.isBlank(code)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "兑换码不可以为空");
+        }
+        User loginUser = userService.getLoginUser(request);
+        boolean result = userService.consumerMemberCode(code, loginUser);
+        if (!result) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "会员码不存在或者该会员码已经被使用，请联系客服");
+        }
+        return ResultUtils.success(result);
+    }
 
 }
