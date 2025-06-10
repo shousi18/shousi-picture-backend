@@ -12,7 +12,9 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.DigestUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.shousi.web.constant.RedissonKeyConstant;
@@ -28,13 +30,16 @@ import com.shousi.web.model.dto.user.UserQueryRequest;
 import com.shousi.web.model.dto.user.UserUpdateEmailRequest;
 import com.shousi.web.model.dto.user.UserUpdatePasswordRequest;
 import com.shousi.web.model.dto.user.VipCode;
+import com.shousi.web.model.entity.Member;
 import com.shousi.web.model.entity.User;
 import com.shousi.web.model.eums.UserRoleEnum;
 import com.shousi.web.model.vo.LoginUserVO;
 import com.shousi.web.model.vo.UserVO;
+import com.shousi.web.service.MemberService;
 import com.shousi.web.service.UserService;
 import com.shousi.web.utils.SendMailUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.elasticsearch.index.mapper.MapperService;
 import org.redisson.api.RBitSet;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
@@ -84,6 +89,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Resource
     private RedissonClient redissonClient;
+
+    @Resource
+    private MemberService memberService;
 
     // 文件读写锁（确保并发安全）
     private final ReentrantLock fileLock = new ReentrantLock();
