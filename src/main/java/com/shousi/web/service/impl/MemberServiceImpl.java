@@ -1,8 +1,11 @@
 package com.shousi.web.service.impl;
 
 import cn.hutool.core.util.RandomUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.shousi.web.mapper.MemberMapper;
+import com.shousi.web.model.dto.member.MemberQueryRequest;
 import com.shousi.web.model.entity.Member;
 import com.shousi.web.service.MemberService;
 import org.springframework.stereotype.Service;
@@ -11,13 +14,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
-* @author 86172
-* @description 针对表【member(会员表)】的数据库操作Service实现
-* @createDate 2025-06-07 13:47:38
-*/
+ * @author 86172
+ * @description 针对表【member(会员表)】的数据库操作Service实现
+ * @createDate 2025-06-07 13:47:38
+ */
 @Service
 public class MemberServiceImpl extends ServiceImpl<MemberMapper, Member>
-    implements MemberService{
+        implements MemberService {
 
     @Override
     public List<String> createVipCode() {
@@ -40,6 +43,18 @@ public class MemberServiceImpl extends ServiceImpl<MemberMapper, Member>
             throw new RuntimeException("会员码生成失败");
         }
         return vipCodes;
+    }
+
+    @Override
+    public Page<Member> listVipCode(MemberQueryRequest memberQueryRequest) {
+        String vipCode = memberQueryRequest.getVipCode();
+        Long userId = memberQueryRequest.getUserId();
+        int current = memberQueryRequest.getCurrent();
+        int pageSize = memberQueryRequest.getPageSize();
+        LambdaQueryWrapper<Member> query = new LambdaQueryWrapper<>();
+        query.like(vipCode != null, Member::getVipCode, vipCode);
+        query.eq(userId != null, Member::getUserId, userId);
+        return this.page(new Page<>(current, pageSize), query);
     }
 }
 

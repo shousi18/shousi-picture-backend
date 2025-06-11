@@ -1,6 +1,8 @@
 package com.shousi.web.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.shousi.web.model.dto.member.MemberQueryRequest;
 import com.shousi.web.model.entity.Member;
 
 import java.util.List;
@@ -17,4 +19,11 @@ public interface MemberService extends IService<Member> {
      * @return
      */
     List<String> createVipCode();
+
+    /**
+     * 列出会员码
+     *
+     * @return
+     */
+    Page<Member> listVipCode(MemberQueryRequest memberQueryRequest);
 }
