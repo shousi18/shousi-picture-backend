@@ -376,7 +376,13 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         boolean result = this.updateBatchById(pictureList);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
     }
-
+    @Override
+    public void pictureReviewRejectBatch(List<Long> pictureIdList, User loginUser) {
+        List<Picture> pictureList = baseMapper.selectByIds(pictureIdList);
+        pictureList.forEach(picture -> this.fillReviewRejectParams(picture, loginUser));
+        boolean result = this.updateBatchById(pictureList);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+    }
     @Override
     public void fillReviewParams(Picture picture, User loginUser) {
         if (UserRoleEnum.ADMIN.getValue().equals(loginUser.getUserRole())) {

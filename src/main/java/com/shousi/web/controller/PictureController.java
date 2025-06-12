@@ -471,6 +471,16 @@ public class    PictureController {
         pictureService.pictureReviewBatch(pictureIdList, loginUser);
         return ResultUtils.success(true);
     }
+    @PostMapping("/review/reject/batch")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> pictureReviewRejectBatch(@RequestBody List<Long> pictureIdList, HttpServletRequest request) {
+        if (CollUtil.isEmpty(pictureIdList)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        User loginUser = userService.getLoginUser(request);
+        pictureService.pictureReviewRejectBatch(pictureIdList, loginUser);
+        return ResultUtils.success(true);
+    }
     /**
      * 创建 AI 扩图任务
      */

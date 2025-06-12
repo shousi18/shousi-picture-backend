@@ -79,7 +79,12 @@ public interface PictureService extends IService<Picture> {
      * @param loginUser
      */
     void pictureReviewBatch(List<Long> pictureIdList, User loginUser);
-
+    /**
+     * 图片批量审核（拒绝）
+     * @param pictureIdList
+     * @param loginUser
+     */
+    void pictureReviewRejectBatch(List<Long> pictureIdList, User loginUser);
     /**
      * 校验图片权限
      *
