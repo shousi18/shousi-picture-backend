@@ -384,6 +384,19 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
     }
     @Override
+    public void fillReviewRejectParams(Picture picture, User loginUser) {
+        if (UserRoleEnum.ADMIN.getValue().equals(loginUser.getUserRole())) {
+            // 管理员自动过审
+            picture.setReviewerId(loginUser.getId());
+            picture.setReviewTime(new Date());
+            picture.setReviewMessage("管理员审核拒绝");
+            picture.setReviewStatus(PictureReviewStatusEnum.REJECT.getValue());
+        } else {
+            // 非管理员，创建修改图片都修改为待审核状态
+            picture.setReviewStatus(PictureReviewStatusEnum.REVIEWING.getValue());
+        }
+    }
+    @Override
     public void fillReviewParams(Picture picture, User loginUser) {
         if (UserRoleEnum.ADMIN.getValue().equals(loginUser.getUserRole())) {
             // 管理员自动过审
