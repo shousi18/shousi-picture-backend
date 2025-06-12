@@ -32,17 +32,6 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category>
     implements CategoryService{
 
     @Override
-    public Long addCategory(CategoryAddRequest categoryAddRequest) {
-        ThrowUtils.throwIf(categoryAddRequest == null, ErrorCode.PARAMS_ERROR);
-        Category category = new Category();
-        String tagName = categoryAddRequest.getCategoryName();
-        category.setCategoryName(tagName);
-        boolean result = this.save(category);
-        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
-        return category.getId();
-    }
-
-    @Override
     public List<CategoryVO> listHotCategories() {
         // 查询最热门前十个分类
         LambdaQueryWrapper<Category> queryWrapper = new QueryWrapper<Category>().lambda()

@@ -30,14 +30,6 @@ public interface TagService extends IService<Tag> {
     TagVO convertToVO(Tag tag);
 
     /**
-     * 添加标签
-     *
-     * @param tagAddRequest
-     * @return
-     */
-    Long addTag(TagAddRequest tagAddRequest);
-
-    /**
      * 增加标签使用次数
      * @param tags
      */

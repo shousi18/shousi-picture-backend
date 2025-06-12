@@ -15,13 +15,6 @@ import java.util.List;
 public interface CategoryService extends IService<Category> {
 
     /**
-     * 添加分类
-     * @param categoryAddRequest
-     * @return
-     */
-    Long addCategory(CategoryAddRequest categoryAddRequest);
-
-    /**
      * 获取热门分类
      *
      * @return

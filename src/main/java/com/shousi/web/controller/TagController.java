@@ -31,14 +31,6 @@ public class TagController {
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
-    @PostMapping("/add")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Long> addTag(@RequestBody TagAddRequest tagAddRequest) {
-        ThrowUtils.throwIf(tagAddRequest == null, ErrorCode.PARAMS_ERROR);
-        Long tagId = tagService.addTag(tagAddRequest);
-        return ResultUtils.success(tagId);
-    }
-
     @GetMapping("/list/hot")
     public BaseResponse<List<TagVO>> listHotTags() {
         String tagList = stringRedisTemplate.opsForValue().get(RedisKeyConstant.PICTURE_HOT_TAG_LIST);
