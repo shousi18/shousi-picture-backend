@@ -51,4 +51,11 @@ public interface CategoryService extends IService<Category> {
      * @return
      */
     List<CategoryVO> listCategories();
+
+    /**
+     * 添加分类
+     * @param categoryAddRequest
+     * @return
+     */
+    Long addCategory(CategoryAddRequest categoryAddRequest);
 }

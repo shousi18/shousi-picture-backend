@@ -98,6 +98,17 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category>
         return list.stream().map(this::convertToVO)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public Long addCategory(CategoryAddRequest categoryAddRequest) {
+        ThrowUtils.throwIf(categoryAddRequest == null, ErrorCode.PARAMS_ERROR);
+        Category category = new Category();
+        String tagName = categoryAddRequest.getCategoryName();
+        category.setCategoryName(tagName);
+        boolean result = this.save(category);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        return category.getId();
+    }
 }
 
 

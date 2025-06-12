@@ -31,6 +31,14 @@ public class CategoryController {
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
+    @PostMapping("/add")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Long> addCategory(@RequestBody CategoryAddRequest categoryAddRequest) {
+        ThrowUtils.throwIf(categoryAddRequest == null, ErrorCode.PARAMS_ERROR);
+        Long categoryId = categoryService.addCategory(categoryAddRequest);
+        return ResultUtils.success(categoryId);
+    }
+
     @GetMapping("/list/hot")
     public BaseResponse<List<CategoryVO>> listHotCategories() {
         String categoryList = stringRedisTemplate.opsForValue().get(RedisKeyConstant.PICTURE_HOT_CATEGORY_LIST);
