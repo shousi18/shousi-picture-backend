@@ -52,4 +52,12 @@ public interface TagService extends IService<Tag> {
      * @return
      */
     List<TagVO> listTags();
+
+    /**
+     * 添加标签
+     *
+     * @param tagAddRequest
+     * @return
+     */
+    Long addTag(TagAddRequest tagAddRequest);
 }

@@ -106,6 +106,17 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag>
         BeanUtils.copyProperties(tag, tagVO);
         return tagVO;
     }
+
+    @Override
+    public Long addTag(TagAddRequest tagAddRequest) {
+        ThrowUtils.throwIf(tagAddRequest == null, ErrorCode.PARAMS_ERROR);
+        Tag tag = new Tag();
+        String tagName = tagAddRequest.getTagName();
+        tag.setTagName(tagName);
+        boolean save = this.save(tag);
+        ThrowUtils.throwIf(!save, ErrorCode.OPERATION_ERROR);
+        return tag.getId();
+    }
 }
 
 
