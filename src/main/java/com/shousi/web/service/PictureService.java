@@ -131,4 +131,9 @@ public interface PictureService extends IService<Picture> {
      * @return
      */
     CreateOutPaintingTaskResponse createOutPaintingTask(CreatePictureOutPaintingTaskRequest createPictureOutPaintingTaskRequest, User loginUser);
+    /**
+     * 图片日排行榜
+     * @return
+     */
+    List<PictureVO> rankPictureDay();
 }

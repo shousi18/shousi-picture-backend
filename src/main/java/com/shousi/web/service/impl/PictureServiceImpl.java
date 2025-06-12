@@ -646,6 +646,20 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             throw e;
         }
     }
+    @Override
+    public List<PictureVO> rankPictureDay() {
+        // 设置为00:00:00
+        Date now = DateUtil.date().setField(DateField.HOUR_OF_DAY, 0).setField(DateField.MINUTE, 0).setField(DateField.SECOND, 0);
+        Date yesterday = DateUtil.offset(now, DateField.DAY_OF_YEAR, -1);
+        // 查询updateTime在昨天到今天的图片
+        // 并且按照点赞数倒序排序
+        List<Picture> pictureList = this.lambdaQuery()
+                .orderByDesc(Picture::getThumbCount)
+                .between(Picture::getUpdateTime, yesterday, now)
+                .last("limit 10")
+                .list();
+        return pictureList.stream().map(this::convertToVO).toList();
+    }
 }
 
 

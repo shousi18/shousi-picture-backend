@@ -55,7 +55,7 @@ import java.util.concurrent.TimeUnit;
 @RestController
 @RequestMapping("/picture")
 @Slf4j
-public class PictureController {
+public class    PictureController {
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
@@ -509,5 +509,17 @@ public class PictureController {
         String historyKey = "picture:edit:history:" + pictureId;
         stringRedisTemplate.delete(historyKey);
         return ResultUtils.success("清除历史记录");
+    }
+    /**
+     * 根据点赞数来排行图片（每日）
+     * @return
+     */
+    @GetMapping("rank/picture/day")
+    public BaseResponse<List<PictureVO>> rankPictureDay() {
+        List<PictureVO> pictureVOList = pictureService.rankPictureDay();
+        if (pictureVOList == null) {
+            return ResultUtils.success(Lists.newArrayListWithCapacity(0));
+        }
+        return ResultUtils.success(pictureVOList);
     }
 }
