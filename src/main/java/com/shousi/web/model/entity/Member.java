@@ -12,7 +12,7 @@ import lombok.Data;
  * 会员表
  * @TableName member
  */
-@TableName(value = "com/shousi/web/model/dto/member")
+@TableName(value = "member")
 @Data
 public class Member implements Serializable {
     /**
